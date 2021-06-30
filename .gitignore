@@ -5,9 +5,9 @@
 
 # ignore all models in checkpoint
 checkpoints/
-/checkpoints/*/*
+# checkpoints/*/
 # keep the checkpoint folder
-!checkpoints/.gitkeep
+!.gitkeep
 # yolov3.tf.index
 
 /serving/*
