@@ -7,7 +7,7 @@
 checkpoints/
 # checkpoints/*/
 # keep the checkpoint folder
-!.gitkeep
+!checkpoints/.gitkeep
 # yolov3.tf.index
 
 /serving/*
