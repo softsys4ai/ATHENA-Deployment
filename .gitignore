@@ -4,10 +4,10 @@
 *.tfrecord
 
 # ignore all models in checkpoint
-checkpoints/
+src/yolov3Tf2/checkpoints/*
 # checkpoints/*/
 # keep the checkpoint folder
-#!gitkeep
+!src/yolov3Tf2/checkpoints/.gitkeep
 # yolov3.tf.index
 
 /serving/*
