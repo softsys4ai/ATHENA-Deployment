@@ -3,11 +3,11 @@
 *.tar
 *.tfrecord
 
-#ignore all models in checkpoint
+# ignore all models in checkpoint
 /checkpoints/*
 /checkpoints/*/*
-#keep the checkpoint folder
-#!checkpoints/.gitkeep
+# keep the checkpoint folder
+# !checkpoints/.gitkeep
 yolov3.tf.index
 
 /serving/*
