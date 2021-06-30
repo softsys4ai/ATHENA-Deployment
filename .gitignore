@@ -8,7 +8,7 @@
 /checkpoints/*/*
 #keep the checkpoint folder
 #!checkpoints/.gitkeep
-*.index
+checkpoints/*.index
 
 /serving/*
 /logs/
