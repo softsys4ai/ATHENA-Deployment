@@ -21,7 +21,7 @@ flags.DEFINE_string('video', './data/video.mp4',
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
-
+flags.DEFINE_integer('rotate', 0, 'degrees to rotate image')
 
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -64,8 +64,7 @@ def main(_argv):
             rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
             result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
             return result
-        #img = np.flip(img, 0) # test if yolo works on fliped
-        #img = rotate_image(img, 3) #
+        img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
         if img is None:
             logging.warning("Empty Frame")
             time.sleep(0.1)

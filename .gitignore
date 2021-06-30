@@ -2,7 +2,12 @@
 *.weights
 *.tar
 *.tfrecord
-/checkpoints/*
+
+#ignore all models in checkpoint
+checkpoints/*
+#keep the checkpoint folder
+!checkpoints/.gitkeep
+
 /serving/*
 /logs/
 /Untitled.ipynb
