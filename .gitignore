@@ -8,8 +8,11 @@ src/yolov3Tf2/checkpoints/*
 # keep the checkpoint folder
 !src/yolov3Tf2/checkpoints/.gitkeep
 
+#do not save datasets
 src/yolov3Tf2/data/*/
 
+#do not save logs
+src/yolov3Tf2/logs/*
 /serving/*
 /logs/
 /Untitled.ipynb
