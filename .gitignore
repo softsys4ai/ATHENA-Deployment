@@ -8,6 +8,7 @@ src/yolov3Tf2/checkpoints/*
 # keep the checkpoint folder
 !src/yolov3Tf2/checkpoints/.gitkeep
 
+src/yolov3Tf2/data/*/
 
 /serving/*
 /logs/
