@@ -12,7 +12,7 @@ src/yolov3Tf2/checkpoints/*
 src/yolov3Tf2/data/*/
 
 #do not save logs
-src/yolov3Tf2/logs/*
+src/yolov3Tf2/logs/*/
 /serving/*
 /logs/
 /Untitled.ipynb
