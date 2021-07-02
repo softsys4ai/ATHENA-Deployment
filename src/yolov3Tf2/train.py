@@ -22,8 +22,10 @@ import yolov3_tf2.dataset as dataset
 flags.DEFINE_string('dataset', '', 'path to dataset')
 flags.DEFINE_string('val_dataset', '', 'path to validation dataset')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
-flags.DEFINE_string('weights', './checkpoints/yolov3.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
+flags.DEFINE_string('output', './checkpoints/yolov3_voc/yolov3_voc.tf',
+                    'path to save')
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_enum('mode', 'fit', ['fit', 'eager_fit', 'eager_tf'],
                   'fit: model.fit, '
@@ -171,16 +173,17 @@ def main(_argv):
 
             avg_loss.reset_states()
             avg_val_loss.reset_states()
-            model.save_weights(
-                'checkpoints/yolov3_train_{}.tf'.format(epoch))
+            model.save_weights(FLAGS.output)
+            #FLAGS.output[:-3] + f'_{epoch}.tf'
+                #'checkpoints/yolov3_train_{}.tf'.format(epoch))
     else:
         model.compile(optimizer=optimizer, loss=loss,
                       run_eagerly=(FLAGS.mode == 'eager_fit'))
-
+# checkpoints/yolov3_train_{epoch}.tf
         callbacks = [
             ReduceLROnPlateau(verbose=1),
             EarlyStopping(patience=3, verbose=1),
-            ModelCheckpoint('checkpoints/yolov3_train_{epoch}.tf',
+            ModelCheckpoint(FLAGS.output[:-3] + '_{epoch}.tf',
                             verbose=1, save_weights_only=True),
             TensorBoard(log_dir='logs')
         ]
@@ -196,3 +199,5 @@ if __name__ == '__main__':
         app.run(main)
     except SystemExit:
         pass
+
+#python train.py --dataset ./data/voc2012_train.tfrecord --val_dataset ./data/voc2012_val.tfrecord --classes ./data/voc2012.names --num_classes 20 --mode fit --transfer darknet --batch_size 16 --epochs 10 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80

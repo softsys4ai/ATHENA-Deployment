@@ -12,7 +12,7 @@ from yolov3_tf2.utils import draw_outputs
 import numpy as np #my thing to flip image
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
@@ -65,6 +65,7 @@ def main(_argv):
             result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
             return result
         img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
+
         if img is None:
             logging.warning("Empty Frame")
             time.sleep(0.1)
