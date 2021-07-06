@@ -173,8 +173,8 @@ def main(_argv):
 
             avg_loss.reset_states()
             avg_val_loss.reset_states()
-            model.save_weights(FLAGS.output)
-            #FLAGS.output[:-3] + f'_{epoch}.tf'
+            model.save_weights(FLAGS.output[:-3] + f'_{epoch}.tf')
+
                 #'checkpoints/yolov3_train_{}.tf'.format(epoch))
     else:
         model.compile(optimizer=optimizer, loss=loss,
@@ -187,6 +187,12 @@ def main(_argv):
                             verbose=1, save_weights_only=True),
             TensorBoard(log_dir='logs')
         ]
+        print(train_dataset)
+        print(type(train_dataset))
+        print(train_dataset)
+        #print(train_dataset[1][0])
+        #print(train_dataset[1][1])
+        #print(train_dataset[1][2])
 
         history = model.fit(train_dataset,
                             epochs=FLAGS.epochs,
@@ -201,3 +207,8 @@ if __name__ == '__main__':
         pass
 
 #python train.py --dataset ./data/voc2012_train.tfrecord --val_dataset ./data/voc2012_val.tfrecord --classes ./data/voc2012.names --num_classes 20 --mode fit --transfer darknet --batch_size 16 --epochs 10 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80
+
+
+#((None, 416, 416, 3), ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6)))
+#((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
+#((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
