@@ -27,16 +27,14 @@ import os, sys
 import numpy as np
 import tensorflow as tf
 import logging
+import dataset_util
+from absl import app, flags, logging
 
-#import tools.dataset_util as dataset_util
-#import
-
-from tools import dataset_util
-
-flags = tf.app.flags
-flags.DEFINE_string('data_dir', './data/coco2017_raw', 'Root directory to raw Microsoft COCO dataset.')
+#flags = tf.app.flags
+flags.DEFINE_string('data_dir', '../data/coco2017_raw', 'Root directory to raw Microsoft COCO dataset.')
+flags.DEFINE_string('classes', '../data/coco.names', 'classes file')
 flags.DEFINE_string('set', 'train', 'Convert training set or validation set')
-flags.DEFINE_string('output_filepath', './data/coco2017_train.tfrecord', 'Path to output TFRecord')
+flags.DEFINE_string('output_filepath', '../data/coco2017_train.tfrecord', 'Path to output TFRecord')
 flags.DEFINE_bool('shuffle_imgs',True,'whether to shuffle images of coco')
 FLAGS = flags.FLAGS
 
@@ -55,6 +53,11 @@ def load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img = True
     cat_ids = coco.getCatIds() # totally 90 catagories, however, the number of categories is not continuous, \
                                # [0,12,26,29,30,45,66,68,69,71,83] are missing, this is the problem of coco dataset.
 
+    dataset_map = {category['id']: category['name'] for category in coco.dataset['categories']}
+    class_map = {name: idx for idx, name in enumerate(
+        open(FLAGS.classes).read().splitlines())}
+    logging.info("Class mapping loaded: %s", class_map)
+
     if shuffle_img:
         shuffle(img_ids)
 
@@ -67,6 +70,7 @@ def load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img = True
         img_info = {}
         bboxes = []
         labels = []
+        text = []
 
         img_detail = coco.loadImgs(img_id)[0]
         pic_height = img_detail['height']
@@ -80,17 +84,24 @@ def load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img = True
                                   bboxes_data[2]/float(pic_width), bboxes_data[3]/float(pic_height)]
                          # the format of coco bounding boxs is [Xmin, Ymin, width, height]
             bboxes.append(bboxes_data)
-            labels.append(ann['category_id'])
+
+
+            label_text = dataset_map[ann['category_id']]
+            text.append(label_text.encode('utf8'))
+            real_id = class_map[label_text]
+            labels.append(real_id)
 
 
         img_path = os.path.join(imgs_dir, img_detail['file_name'])
-        img_bytes = tf.gfile.FastGFile(img_path,'rb').read()
+        img_bytes = tf.io.gfile.GFile(img_path,'rb').read()
 
         img_info['pixel_data'] = img_bytes
         img_info['height'] = pic_height
         img_info['width'] = pic_width
         img_info['bboxes'] = bboxes
         img_info['labels'] = labels
+        img_info['text'] = text
+
 
         coco_data.append(img_info)
     return coco_data
@@ -120,10 +131,12 @@ def dict_to_coco_example(img_data):
         'image/object/bbox/ymin': dataset_util.float_list_feature(ymin),
         'image/object/bbox/ymax': dataset_util.float_list_feature(ymax),
         'image/object/class/label': dataset_util.int64_list_feature(img_data['labels']),
+        'image/object/class/text': dataset_util.bytes_list_feature(img_data['text']),
         'image/encoded': dataset_util.bytes_feature(img_data['pixel_data']),
         'image/format': dataset_util.bytes_feature('jpeg'.encode('utf-8')),
     }))
     return example
+#'image/object/class/text': tf.train.Feature(bytes_list=tf.train.BytesList(value=classes_text)),
 
 def main(_):
     if FLAGS.set == "train":
@@ -136,11 +149,12 @@ def main(_):
         print("Convert coco val file to tf record")
     else:
         raise ValueError("you must either convert train data or val data")
+
     # load total coco data
-    coco_data = load_coco_dection_dataset(imgs_dir,annotations_filepath,shuffle_img=FLAGS.shuffle_imgs)
+    coco_data = load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img=FLAGS.shuffle_imgs)
     total_imgs = len(coco_data)
     # write coco data to tf record
-    with tf.python_io.TFRecordWriter(FLAGS.output_filepath) as tfrecord_writer:
+    with tf.io.TFRecordWriter(FLAGS.output_filepath) as tfrecord_writer:
         for index, img_data in enumerate(coco_data):
             if index % 100 == 0:
                 print("Converting images: %d / %d" % (index, total_imgs))
@@ -149,4 +163,5 @@ def main(_):
 
 
 if __name__ == "__main__":
-    tf.app.run()
+    #tf.app.run()
+    app.run(main)

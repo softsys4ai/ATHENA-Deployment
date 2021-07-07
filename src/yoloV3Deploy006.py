@@ -9,6 +9,7 @@ from multiprocessing import Process, Array, shared_memory
 import ctypes
 import sys
 
+
 def shared_array(dtype, shape):
     """
     Form a shared memory numpy array.

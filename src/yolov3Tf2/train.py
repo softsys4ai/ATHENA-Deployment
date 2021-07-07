@@ -187,9 +187,10 @@ def main(_argv):
                             verbose=1, save_weights_only=True),
             TensorBoard(log_dir='logs')
         ]
-        print(train_dataset)
-        print(type(train_dataset))
-        print(train_dataset)
+
+        #print(train_dataset)
+        #print(type(train_dataset))
+        #print(train_dataset)
         #print(train_dataset[1][0])
         #print(train_dataset[1][1])
         #print(train_dataset[1][2])
@@ -206,8 +207,9 @@ if __name__ == '__main__':
     except SystemExit:
         pass
 
-#python train.py --dataset ./data/voc2012_train.tfrecord --val_dataset ./data/voc2012_val.tfrecord --classes ./data/voc2012.names --num_classes 20 --mode fit --transfer darknet --batch_size 16 --epochs 10 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80
+#python train.py --dataset ./data/voc2012_train.tfrecord --val_dataset ./data/voc2012_val.tfrecord --classes ./data/voc2012.names --num_classes 20 --mode fit --transfer darknet --batch_size 16 --epochs 10 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_voc2017/yolov3_voc2017.tf
 
+#python train.py --dataset ./data/coco2017_train.tfrecord --val_dataset ./data/coco2017_train.tfrecord --classes ./data/coco.names --num_classes 80 --mode fit --transfer darknet --batch_size 16 --epochs 1 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_coco2017/yolov3_coco2017.tf
 
 #((None, 416, 416, 3), ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6)))
 #((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
