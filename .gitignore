@@ -9,7 +9,7 @@ src/checkpoints/*/*
 !src/checkpoints/.gitkeep
 
 #ignore old code TODO: remove this
-OLD/*
+src/OLD/*
 
 #do not save datasets
 src/data/*/
