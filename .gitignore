@@ -4,7 +4,7 @@
 *.tfrecord
 
 # ignore all models in checkpoint
-src/checkpoints/*/
+src/checkpoints/*/*
 # keep the checkpoint folder
 !src/checkpoints/.gitkeep
 
