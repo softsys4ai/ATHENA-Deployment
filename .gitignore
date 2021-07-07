@@ -6,7 +6,7 @@
 # ignore all models in checkpoint
 src/checkpoints/*/
 # keep the checkpoint folder
-!checkpoints/.gitkeep
+!src/checkpoints/.gitkeep
 
 #do not save datasets
 src/data/*/
