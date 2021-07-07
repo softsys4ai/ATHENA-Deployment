@@ -10,7 +10,7 @@ checkpoints/*
 
 #do not save datasets
 src/data/*/
-
+src/data/*/*
 #do not save logs
 src/logs/*/
 
