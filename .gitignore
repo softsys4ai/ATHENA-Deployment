@@ -4,13 +4,13 @@
 *.tfrecord
 
 # ignore all models in checkpoint
-checkpoints/*
+src/checkpoints/*
 # keep the checkpoint folder
 !checkpoints/.gitkeep
 
 #do not save datasets
 src/data/*/
-src/data/*/*
+#src/data/*/*
 #do not save logs
 src/logs/*/
 
