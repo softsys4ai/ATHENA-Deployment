@@ -4,15 +4,15 @@
 *.tfrecord
 
 # ignore all models in checkpoint
-src/yolov3Tf2/checkpoints/*
+checkpoints/*
 # keep the checkpoint folder
-!src/yolov3Tf2/checkpoints/.gitkeep
+!checkpoints/.gitkeep
 
 #do not save datasets
-src/yolov3Tf2/data/*/
+src/data/*/
 
 #do not save logs
-src/yolov3Tf2/logs/*/
+src/logs/*/
 
 /serving/*
 /logs/
