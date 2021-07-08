@@ -4,17 +4,18 @@
 *.tfrecord
 
 # ignore all models in checkpoint
-checkpoints/*
+src/checkpoints/*
 # keep the checkpoint folder
-!checkpoints/.gitkeep
+!src/checkpoints/.gitkeep
 
 #ignore old code TODO: remove this and delete old
-OLD/*
+src/OLD/*
 
 #do not save datasets
-data/*/
-
-
+src/data/*/
+#src/data/*/*
+#do not save logs
+src/logs/*/
 
 /serving/*
 /logs/

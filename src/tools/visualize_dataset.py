@@ -2,7 +2,7 @@ from absl import app, flags, logging
 from absl.flags import FLAGS
 import cv2
 import numpy as np
-from yolov3_tf2.dataset import load_tfrecord_dataset, transform_images #TODO fix this
+from yolov3_tf2.dataset import load_tfrecord_dataset #TODO fix this
 from yolov3_tf2.utils import draw_outputs #TODO fix this no import
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
