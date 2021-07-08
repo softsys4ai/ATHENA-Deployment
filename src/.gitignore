@@ -13,9 +13,8 @@ OLD/*
 
 #do not save datasets
 data/*/
-#src/data/*/*
-#do not save logs
-#logs/*/
+
+
 
 /serving/*
 /logs/

@@ -27,7 +27,7 @@ import os, sys
 import numpy as np
 import tensorflow as tf
 import logging
-import dataset_util
+import tools.dataset_util as dataset_util #TODO fix this no import
 from absl import app, flags, logging
 
 #flags = tf.app.flags

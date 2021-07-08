@@ -1,12 +1,9 @@
-import time
 from absl import app, flags, logging
 from absl.flags import FLAGS
 import cv2
 import numpy as np
-import tensorflow as tf
-from yolov3_tf2.models import (YoloV3, YoloV3Tiny)
-from ..yolov3_tf2.dataset import load_tfrecord_dataset, transform_images
-from yolov3_tf2.utils import draw_outputs
+from yolov3_tf2.dataset import load_tfrecord_dataset, transform_images #TODO fix this
+from yolov3_tf2.utils import draw_outputs #TODO fix this no import
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_integer('size', 416, 'resize images to')
