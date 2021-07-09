@@ -1,3 +1,5 @@
+import sys
+sys.path.append("./")
 import time
 from absl import app, flags, logging
 from absl.flags import FLAGS

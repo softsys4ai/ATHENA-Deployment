@@ -16,10 +16,11 @@ Example usage:
         --output_path=/where/you/want/to/save/pascal.record
         --shuffle_imgs=True
 """
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import sys
+sys.path.append("./")
 from pycocotools.coco import COCO
 from PIL import Image
 from random import shuffle
@@ -27,7 +28,7 @@ import os, sys
 import numpy as np
 import tensorflow as tf
 import logging
-import tools.dataset_util as dataset_util #TODO fix this no import
+from tools import dataset_util #TODO fix this no import
 from absl import app, flags, logging
 
 #flags = tf.app.flags
