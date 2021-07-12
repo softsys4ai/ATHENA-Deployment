@@ -1,6 +1,4 @@
 import time
-
-import skimage
 from absl import app, flags, logging
 from absl.flags import FLAGS
 import cv2
@@ -12,18 +10,20 @@ from yolov3_tf2.dataset import transform_images
 from yolov3_tf2.utils import draw_outputs
 
 import numpy as np #my thing to flip image
+import random
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_string('video', './data/video.mp4',
+flags.DEFINE_string('video', '0',
                     'path to video file or number for webcam)')
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('rotate', 0, 'degrees to rotate image')
+
 
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -34,8 +34,10 @@ def main(_argv):
         yolo = YoloV3Tiny(classes=FLAGS.num_classes)
     else:
         yolo = YoloV3(classes=FLAGS.num_classes)
+        yolo2 = YoloV3(classes=FLAGS.num_classes)
 
     yolo.load_weights(FLAGS.weights)
+    yolo2.load_weights(FLAGS.weights)
     logging.info('weights loaded')
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
@@ -58,23 +60,23 @@ def main(_argv):
         codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
+
     while True:
         _, img = vid.read()
-        if img is None:
-            logging.warning("Empty Frame")
-            time.sleep(0.1)
-            continue
 
         def rotate_image(image, angle):
             image_center = tuple(np.array(image.shape[1::-1]) / 2)
             rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
             result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
             return result
-
         img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
 
+        if img is None:
+            logging.warning("Empty Frame")
+            time.sleep(0.1)
+            continue
+
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = skimage.util.random_noise(img, mode='salt', seed=None, clip=True, amount=0.1)
         img_in = tf.expand_dims(img_in, 0)
         img_in = transform_images(img_in, FLAGS.size)
 
@@ -86,10 +88,43 @@ def main(_argv):
 
         img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
         img = cv2.putText(img, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
-                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (random.randint(0,255), random.randint(0,255), random.randint(0,255)), 2)
         if FLAGS.output:
             out.write(img)
         cv2.imshow('output', img)
+
+        _, img = vid.read()
+
+        def rotate_image(image, angle):
+            image_center = tuple(np.array(image.shape[1::-1]) / 2)
+            rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+            result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+            return result
+
+        img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
+
+        if img is None:
+            logging.warning("Empty Frame")
+            time.sleep(0.1)
+            continue
+
+        img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img_in = tf.expand_dims(img_in, 0)
+        img_in = transform_images(img_in, FLAGS.size)
+
+        t1 = time.time()
+        boxes, scores, classes, nums = yolo2.predict(img_in)
+        t2 = time.time()
+        times.append(t2 - t1)
+        times = times[-20:]
+
+        img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
+        img = cv2.putText(img, "Time: {:.2f}ms".format(sum(times) / len(times) * 1000), (0, 30),
+                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (random.randint(0,255), random.randint(0,255), random.randint(0,255)), 2)
+        if FLAGS.output:
+            out.write(img)
+        cv2.imshow('output', img)
+
         if cv2.waitKey(1) == ord('q'):
             break
 

@@ -23,7 +23,7 @@ flags.DEFINE_string('val_dataset', '', 'path to validation dataset')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
-flags.DEFINE_string('output', './checkpoints/yolov3_voc/yolov3_voc.tf',
+flags.DEFINE_string('output', './checkpoints/yolov3_trash/yolov3_trash.tf',
                     'path to save')
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_enum('mode', 'fit', ['fit', 'eager_fit', 'eager_tf'],
