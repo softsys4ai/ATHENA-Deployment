@@ -18,12 +18,13 @@ flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_string('video', './data/video.mp4',
+flags.DEFINE_string('video', './data/Office-Parkour.mp4',
                     'path to video file or number for webcam)')
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('rotate', 0, 'degrees to rotate image')
+
 
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -72,11 +73,11 @@ def main(_argv):
             return result
 
         img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
-
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = skimage.util.random_noise(img, mode='salt', seed=None, clip=True, amount=0.1)
+        #img_in = skimage.util.random_noise(img_in, mode='salt', seed=None, clip=False, amount=0.01)  # noise
         img_in = tf.expand_dims(img_in, 0)
         img_in = transform_images(img_in, FLAGS.size)
+
 
         t1 = time.time()
         boxes, scores, classes, nums = yolo.predict(img_in)
@@ -98,6 +99,7 @@ def main(_argv):
 
 if __name__ == '__main__':
     try:
+        tf.config.run_functions_eagerly(False)
         app.run(main)
     except SystemExit:
         pass

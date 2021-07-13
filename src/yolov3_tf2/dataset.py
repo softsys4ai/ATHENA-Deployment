@@ -1,17 +1,32 @@
 import tensorflow as tf
 from absl.flags import FLAGS
+from absl import logging
 
 @tf.function
 def transform_targets_for_output(y_true, grid_size, anchor_idxs):
     # y_true: (N, boxes, (x1, y1, x2, y2, class, best_anchor))
     N = tf.shape(y_true)[0]
+    #N = y_true.get_shape().as_list()[0]
+    #foo = anchor_idxs.get_shape().as_list()[0]   #tf.shape(anchor_idxs)[0]
+    logging.info(tf.shape(y_true))
+    logging.info(y_true)
+    logging.info(anchor_idxs)
+    logging.info(type(y_true))
+    logging.info(type(N))
+    logging.info('targets transformed suspisious point 2')
 
     # y_true_out: (N, grid, grid, anchors, [x1, y1, x2, y2, obj, class])
+    logging.info(type((N, grid_size, grid_size, tf.shape(anchor_idxs)[0], 6)))
+    #logging.info((0, grid_size, grid_size, foo, 6))
+    logging.info(N)
+
+    # (0, grid_size, grid_size, foo, 6)
     y_true_out = tf.zeros(
         (N, grid_size, grid_size, tf.shape(anchor_idxs)[0], 6))
+    logging.info('targets transformed suspisious point 3')
 
     anchor_idxs = tf.cast(anchor_idxs, tf.int32)
-
+    logging.info('targets transformed suspisious point 4')
     indexes = tf.TensorArray(tf.int32, 1, dynamic_size=True)
     updates = tf.TensorArray(tf.float32, 1, dynamic_size=True)
     idx = 0
@@ -44,6 +59,7 @@ def transform_targets_for_output(y_true, grid_size, anchor_idxs):
 
 
 def transform_targets(y_train, anchors, anchor_masks, size):
+    logging.info(y_train)
     y_outs = []
     grid_size = size // 32
 
@@ -59,20 +75,23 @@ def transform_targets(y_train, anchors, anchor_masks, size):
     iou = intersection / (box_area + anchor_area - intersection)
     anchor_idx = tf.cast(tf.argmax(iou, axis=-1), tf.float32)
     anchor_idx = tf.expand_dims(anchor_idx, axis=-1)
-
+    logging.info(y_train)
     y_train = tf.concat([y_train, anchor_idx], axis=-1)
-
+    logging.info(y_train)
+    logging.info('targets transformed suspisious point 1')
     for anchor_idxs in anchor_masks:
         y_outs.append(transform_targets_for_output(
             y_train, grid_size, anchor_idxs))
         grid_size *= 2
 
+    logging.info('targets transformed')
     return tuple(y_outs)
 
 
 def transform_images(x_train, size):
     x_train = tf.image.resize(x_train, (size, size))
     x_train = x_train / 255
+    logging.info('images transformed')
     return x_train
 
 
@@ -101,8 +120,9 @@ IMAGE_FEATURE_MAP = {
 def parse_tfrecord(tfrecord, class_table, size):
     x = tf.io.parse_single_example(tfrecord, IMAGE_FEATURE_MAP)
     x_train = tf.image.decode_jpeg(x['image/encoded'], channels=3)
+    logging.info(x_train)
     x_train = tf.image.resize(x_train, (size, size))
-
+    logging.info(x_train)
     class_text = tf.sparse.to_dense(
         x['image/object/class/text'], default_value='')
     labels = tf.cast(class_table.lookup(class_text), tf.float32)
@@ -113,8 +133,9 @@ def parse_tfrecord(tfrecord, class_table, size):
                         labels], axis=1)
 
     paddings = [[0, FLAGS.yolo_max_boxes - tf.shape(y_train)[0]], [0, 0]]
+    logging.info(y_train)
     y_train = tf.pad(y_train, paddings)
-
+    logging.info(y_train)
     return x_train, y_train
 
 
@@ -125,6 +146,7 @@ def load_tfrecord_dataset(file_pattern, class_file, size=416):
 
     files = tf.data.Dataset.list_files(file_pattern)
     dataset = files.flat_map(tf.data.TFRecordDataset)
+    logging.info(dataset)
     return dataset.map(lambda x: parse_tfrecord(x, class_table, size))
 
 
@@ -139,6 +161,7 @@ def load_fake_dataset():
         [0.09158827, 0.48252046, 0.26967454, 0.6403017, 67]
     ] + [[0, 0, 0, 0, 0]] * 5
     y_train = tf.convert_to_tensor(labels, tf.float32)
+    logging.info(y_train)
     y_train = tf.expand_dims(y_train, axis=0)
-
+    logging.info(y_train)
     return tf.data.Dataset.from_tensor_slices((x_train, y_train))

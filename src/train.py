@@ -17,6 +17,8 @@ from yolov3_tf2.models import (
 from yolov3_tf2.utils import freeze_all
 import yolov3_tf2.dataset as dataset
 #from yolov3_tf2 import dataset as dataset #this could be a bug
+import sys
+
 
 flags.DEFINE_string('dataset', '', 'path to dataset')
 flags.DEFINE_string('val_dataset', '', 'path to validation dataset')
@@ -47,6 +49,7 @@ flags.DEFINE_integer('weights_num_classes', None, 'specify num class for `weight
 
 
 def main(_argv):
+    logging.info(sys.version)
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     for physical_device in physical_devices:
         tf.config.experimental.set_memory_growth(physical_device, True)
@@ -66,13 +69,19 @@ def main(_argv):
             FLAGS.dataset, FLAGS.classes, FLAGS.size)
     else:
         train_dataset = dataset.load_fake_dataset()
+        print("yuh")
+    print("one", train_dataset)
     train_dataset = train_dataset.shuffle(buffer_size=512)
+    print("two", train_dataset)
     train_dataset = train_dataset.batch(FLAGS.batch_size)
+    print("three", train_dataset)
     train_dataset = train_dataset.map(lambda x, y: (
         dataset.transform_images(x, FLAGS.size),
         dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
+    print("four", train_dataset)
     train_dataset = train_dataset.prefetch(
         buffer_size=tf.data.experimental.AUTOTUNE)
+    print("five", train_dataset)
 
     if FLAGS.val_dataset:
         val_dataset = dataset.load_tfrecord_dataset(
@@ -208,8 +217,10 @@ if __name__ == '__main__':
 
 #python train.py --dataset ./data/voc2012_train.tfrecord --val_dataset ./data/voc2012_val.tfrecord --classes ./data/voc2012.names --num_classes 20 --mode fit --transfer darknet --batch_size 16 --epochs 10 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_voc2017/yolov3_voc2017.tf
 
-#python train.py --dataset ./data/coco2017_train.tfrecord --val_dataset ./data/coco2017_train.tfrecord --classes ./data/coco.names --num_classes 80 --mode fit --transfer darknet --batch_size 16 --epochs 1 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_coco2017/yolov3_coco2017.tf
+#python train.py --dataset ./data/coco2017_train.tfrecord --val_dataset ./data/coco2017_train.tfrecord --classes ./data/coco.names --num_classes 80 --mode fit --transfer darknet --batch_size 16 --epochs 1 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_coco2017_trash/yolov3_coco2017_trash.tf
 
 #((None, 416, 416, 3), ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6)))
 #((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
 #((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
+
+
