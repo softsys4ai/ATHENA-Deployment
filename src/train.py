@@ -79,6 +79,8 @@ def main(_argv):
         dataset.transform_images(x, FLAGS.size),
         dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
     print("four", train_dataset)
+    logging.info("map?????????????")
+    tf.print("map??????")
     train_dataset = train_dataset.prefetch(
         buffer_size=tf.data.experimental.AUTOTUNE)
     print("five", train_dataset)

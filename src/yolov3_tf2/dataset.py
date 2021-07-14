@@ -2,22 +2,23 @@ import tensorflow as tf
 from absl.flags import FLAGS
 from absl import logging
 
+
 @tf.function
 def transform_targets_for_output(y_true, grid_size, anchor_idxs):
     # y_true: (N, boxes, (x1, y1, x2, y2, class, best_anchor))
     N = tf.shape(y_true)[0]
-    #N = y_true.get_shape().as_list()[0]
-    #foo = anchor_idxs.get_shape().as_list()[0]   #tf.shape(anchor_idxs)[0]
-    logging.info(tf.shape(y_true))
-    logging.info(y_true)
-    logging.info(anchor_idxs)
-    logging.info(type(y_true))
-    logging.info(type(N))
+    # N = y_true.get_shape().as_list()[0]
+    # foo = anchor_idxs.get_shape().as_list()[0]   #tf.shape(anchor_idxs)[0]
+    # logging.info(tf.shape(y_true))
+    # logging.info(y_true)
+    # logging.info(anchor_idxs)
+    # logging.info(type(y_true))
+    # logging.info(type(N))
     logging.info('targets transformed suspisious point 2')
 
     # y_true_out: (N, grid, grid, anchors, [x1, y1, x2, y2, obj, class])
     logging.info(type((N, grid_size, grid_size, tf.shape(anchor_idxs)[0], 6)))
-    #logging.info((0, grid_size, grid_size, foo, 6))
+    # logging.info((0, grid_size, grid_size, foo, 6))
     logging.info(N)
 
     # (0, grid_size, grid_size, foo, 6)
@@ -30,7 +31,9 @@ def transform_targets_for_output(y_true, grid_size, anchor_idxs):
     indexes = tf.TensorArray(tf.int32, 1, dynamic_size=True)
     updates = tf.TensorArray(tf.float32, 1, dynamic_size=True)
     idx = 0
+    logging.info('targets transformed suspisious point 5')
     for i in tf.range(N):
+        logging.info('targets transformed suspisious point 6')
         for j in tf.range(tf.shape(y_true)[1]):
             if tf.equal(y_true[i][j][2], 0):
                 continue
@@ -42,7 +45,7 @@ def transform_targets_for_output(y_true, grid_size, anchor_idxs):
                 box_xy = (y_true[i][j][0:2] + y_true[i][j][2:4]) / 2
 
                 anchor_idx = tf.cast(tf.where(anchor_eq), tf.int32)
-                grid_xy = tf.cast(box_xy // (1/grid_size), tf.int32)
+                grid_xy = tf.cast(box_xy // (1 / grid_size), tf.int32)
 
                 # grid[y][x][anchor] = (tx, ty, bw, bh, obj, class)
                 indexes = indexes.write(
@@ -71,7 +74,7 @@ def transform_targets(y_train, anchors, anchor_masks, size):
                      (1, 1, tf.shape(anchors)[0], 1))
     box_area = box_wh[..., 0] * box_wh[..., 1]
     intersection = tf.minimum(box_wh[..., 0], anchors[..., 0]) * \
-        tf.minimum(box_wh[..., 1], anchors[..., 1])
+                   tf.minimum(box_wh[..., 1], anchors[..., 1])
     iou = intersection / (box_area + anchor_area - intersection)
     anchor_idx = tf.cast(tf.argmax(iou, axis=-1), tf.float32)
     anchor_idx = tf.expand_dims(anchor_idx, axis=-1)
@@ -156,10 +159,10 @@ def load_fake_dataset():
     x_train = tf.expand_dims(x_train, axis=0)
 
     labels = [
-        [0.18494931, 0.03049111, 0.9435849,  0.96302897, 0],
-        [0.01586703, 0.35938117, 0.17582396, 0.6069674, 56],
-        [0.09158827, 0.48252046, 0.26967454, 0.6403017, 67]
-    ] + [[0, 0, 0, 0, 0]] * 5
+                 [0.18494931, 0.03049111, 0.9435849, 0.96302897, 0],
+                 [0.01586703, 0.35938117, 0.17582396, 0.6069674, 56],
+                 [0.09158827, 0.48252046, 0.26967454, 0.6403017, 67]
+             ] + [[0, 0, 0, 0, 0]] * 5
     y_train = tf.convert_to_tensor(labels, tf.float32)
     logging.info(y_train)
     y_train = tf.expand_dims(y_train, axis=0)

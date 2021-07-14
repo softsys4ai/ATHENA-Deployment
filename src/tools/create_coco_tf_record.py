@@ -32,10 +32,10 @@ from tools import dataset_util #TODO fix this no import
 from absl import app, flags, logging
 
 #flags = tf.app.flags
-flags.DEFINE_string('data_dir', '../data/coco2017_raw', 'Root directory to raw Microsoft COCO dataset.')
-flags.DEFINE_string('classes', '../data/coco.names', 'classes file')
+flags.DEFINE_string('data_dir', './data/coco2017_raw', 'Root directory to raw Microsoft COCO dataset.')
+flags.DEFINE_string('classes', './data/coco.names', 'classes file')
 flags.DEFINE_string('set', 'train', 'Convert training set or validation set')
-flags.DEFINE_string('output_filepath', '../data/coco2017_train.tfrecord', 'Path to output TFRecord')
+flags.DEFINE_string('output_filepath', './data/coco2017_train_trash.tfrecord', 'Path to output TFRecord')
 flags.DEFINE_bool('shuffle_imgs',True,'whether to shuffle images of coco')
 FLAGS = flags.FLAGS
 
