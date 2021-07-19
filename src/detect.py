@@ -8,7 +8,7 @@ from yolov3_tf2.models import (
     YoloV3, YoloV3Tiny
 )
 from yolov3_tf2.dataset import transform_images, load_tfrecord_dataset
-from yolov3_tf2.utils import draw_outputs
+from yolov3_tf2.utils import draw_outputs, draw_outputs_bbox_deltas, majority_voting
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
@@ -16,7 +16,7 @@ flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
 flags.DEFINE_string('image', './data/girl.png', 'path to input image')
-flags.DEFINE_string('tfrecord', None, 'tfrecord instead of image')
+flags.DEFINE_string('tfrecord', './data/coco2017_train.tfrecord', 'tfrecord instead of image')
 flags.DEFINE_string('output', './output.jpg', 'path to output image')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 
@@ -55,13 +55,19 @@ def main(_argv):
     logging.info('time: {}'.format(t2 - t1))
 
     logging.info('detections:')
-    for i in range(nums[0]):
-        logging.info('\t{}, {}, {}'.format(class_names[int(classes[0][i])],
-                                           np.array(scores[0][i]),
-                                           np.array(boxes[0][i])))
+    #for i in range(nums[0]):
+    #    logging.info('\t{}, {}, {}'.format(class_names[int(classes[0][i])],
+    #                                       np.array(scores[0][i]),
+    #                                       np.array(boxes[0][i])))
 
+
+    #majority_voting((boxes, scores, classes, nums), class_names, FLAGS.size, 10)
     img = cv2.cvtColor(img_raw.numpy(), cv2.COLOR_RGB2BGR)
+    img2 = np.copy(img)
     img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
+    img2 = draw_outputs(img2, majority_voting((boxes, scores, classes, nums), FLAGS.size, 10), class_names)
+    #img2 = draw_outputs_bbox_deltas(img2, (boxes, scores, classes, nums), class_names)
+    img = np.concatenate((img, img2), axis=1)
     cv2.imwrite(FLAGS.output, img)
     logging.info('output saved to: {}'.format(FLAGS.output))
 

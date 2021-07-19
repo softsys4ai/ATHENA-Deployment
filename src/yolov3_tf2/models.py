@@ -211,7 +211,7 @@ def yolo_nms(outputs, anchors, masks, classes):
         score_threshold=FLAGS.yolo_score_threshold,
         soft_nms_sigma=0.5
     )
-    
+
     num_valid_nms_boxes = tf.shape(selected_indices)[0]
 
     selected_indices = tf.concat([selected_indices,tf.zeros(FLAGS.yolo_max_boxes-num_valid_nms_boxes, tf.int32)], 0)
@@ -219,11 +219,11 @@ def yolo_nms(outputs, anchors, masks, classes):
 
     boxes=tf.gather(bbox, selected_indices)
     boxes = tf.expand_dims(boxes, axis=0)
-    scores=selected_scores
+    scores = selected_scores
     scores = tf.expand_dims(scores, axis=0)
-    classes = tf.gather(classes,selected_indices)
+    classes = tf.gather(classes, selected_indices)
     classes = tf.expand_dims(classes, axis=0)
-    valid_detections=num_valid_nms_boxes
+    valid_detections = num_valid_nms_boxes
     valid_detections = tf.expand_dims(valid_detections, axis=0)
 
     return boxes, scores, classes, valid_detections
