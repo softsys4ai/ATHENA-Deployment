@@ -31,14 +31,18 @@ import logging
 from tools import dataset_util #TODO fix this no import
 from absl import app, flags, logging
 
+import cv2
+
 #flags = tf.app.flags
-flags.DEFINE_string('data_dir', './data/coco2017_raw', 'Root directory to raw Microsoft COCO dataset.')
-flags.DEFINE_string('classes', './data/coco.names', 'classes file')
-flags.DEFINE_string('set', 'train', 'Convert training set or validation set')
-flags.DEFINE_string('output_filepath', './data/coco2017_train_trash.tfrecord', 'Path to output TFRecord')
+flags.DEFINE_string('data_dir', '../data/coco2017_raw', 'Root directory to raw Microsoft COCO dataset.')
+flags.DEFINE_string('classes', '../data/coco.names', 'classes file')
+flags.DEFINE_string('set', 'val', 'Convert training set or validation set')
+flags.DEFINE_string('output_filepath', '../data/coco2017_train_trash.tfrecord', 'Path to output TFRecord')
 flags.DEFINE_bool('shuffle_imgs',True,'whether to shuffle images of coco')
 FLAGS = flags.FLAGS
 
+def transformation():
+    pass
 
 def load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img = True ):
     """Load data from dataset by pycocotools. This tools can be download from "http://mscoco.org/dataset/#download"
@@ -94,7 +98,15 @@ def load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img = True
 
 
         img_path = os.path.join(imgs_dir, img_detail['file_name'])
-        img_bytes = tf.io.gfile.GFile(img_path,'rb').read()
+        img_bytes = tf.io.gfile.GFile(img_path, 'rb').read()
+
+        #print(type(img_bytes))
+        #img_bytes = tf.image.decode_image(img_bytes)
+        #img_bytes = tf.image.resize(img_bytes, (416, 416))
+        #img_bytes = img_bytes / 255
+        #img_bytes = np.flip(img_bytes)
+        #cv2.imshow('output', img.numpy())
+        #cv2.waitKey(1000)
 
         img_info['pixel_data'] = img_bytes
         img_info['height'] = pic_height
