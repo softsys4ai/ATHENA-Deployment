@@ -19,12 +19,16 @@ flags.DEFINE_string('image', './data/girl.png', 'path to input image')
 flags.DEFINE_string('tfrecord', './data/coco2017_train.tfrecord', 'tfrecord instead of image')
 flags.DEFINE_string('output', './output.jpg', 'path to output image')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
+flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
 
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    for physical_device in physical_devices:
-        tf.config.experimental.set_memory_growth(physical_device, True)
+    if (physical_devices != []) and (FLAGS.gpu is not None):
+        tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
+        tf.config.experimental.set_memory_growth(physical_devices[FLAGS.gpu], True)
+    else:
+        tf.config.set_visible_devices([], 'GPU')
 
     if FLAGS.tiny:
         yolo = YoloV3Tiny(classes=FLAGS.num_classes)

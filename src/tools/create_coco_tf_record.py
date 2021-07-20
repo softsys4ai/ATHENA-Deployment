@@ -41,8 +41,6 @@ flags.DEFINE_string('output_filepath', '../data/coco2017_train_trash.tfrecord', 
 flags.DEFINE_bool('shuffle_imgs',True,'whether to shuffle images of coco')
 FLAGS = flags.FLAGS
 
-def transformation():
-    pass
 
 def load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img = True ):
     """Load data from dataset by pycocotools. This tools can be download from "http://mscoco.org/dataset/#download"
@@ -100,21 +98,12 @@ def load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img = True
         img_path = os.path.join(imgs_dir, img_detail['file_name'])
         img_bytes = tf.io.gfile.GFile(img_path, 'rb').read()
 
-        #print(type(img_bytes))
-        #img_bytes = tf.image.decode_image(img_bytes)
-        #img_bytes = tf.image.resize(img_bytes, (416, 416))
-        #img_bytes = img_bytes / 255
-        #img_bytes = np.flip(img_bytes)
-        #cv2.imshow('output', img.numpy())
-        #cv2.waitKey(1000)
-
         img_info['pixel_data'] = img_bytes
         img_info['height'] = pic_height
         img_info['width'] = pic_width
         img_info['bboxes'] = bboxes
         img_info['labels'] = labels
         img_info['text'] = text
-
 
         coco_data.append(img_info)
     return coco_data

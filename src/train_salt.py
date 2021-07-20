@@ -50,9 +50,11 @@ flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    if((physical_devices == []) and (FLAGS.gpu !=None)):
+    if (physical_devices == []) and (FLAGS.gpu is not None):
         tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
         tf.config.experimental.set_memory_growth(physical_devices[FLAGS.gpu], True)
+    else:
+        tf.config.experimental.set_visible_devices([], 'GPU')
 
     if FLAGS.tiny:
         model = YoloV3Tiny(FLAGS.size, training=True,

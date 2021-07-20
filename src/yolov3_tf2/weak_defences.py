@@ -3,6 +3,7 @@ import tensorflow as tf
 import skimage
 import numpy as np
 from absl import logging
+import cv2
 
 class WeakDefence(object):
     def __init__(self, model, trans_configs, size):
@@ -34,6 +35,14 @@ class WeakDefence(object):
             return x
         elif self._trans_configs == 'mirror':
             x = np.flip(x, axis=1)
+            x = x / 255
+            return x
+        elif self._trans_configs == 'compress_png':
+            encode_param = [cv2.IMWRITE_PNG_COMPRESSION, 80]
+            #x = x * 255
+            result, x = cv2.imencode('.png', x, encode_param)
+            logging.info(result)
+            x = cv2.imdecode(buf=x, flags=1)
             x = x / 255
             return x
         else:# TODO: clean is returned twice. should else throw an error?

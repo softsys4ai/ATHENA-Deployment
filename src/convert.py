@@ -10,12 +10,17 @@ flags.DEFINE_string('weights', './data/yolov3.weights', 'path to weights file')
 flags.DEFINE_string('output', './checkpoints/yolov3/yolov3.tf', 'path to output')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
+flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
 
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    if len(physical_devices) > 0:
-        tf.config.experimental.set_memory_growth(physical_devices[0], True)
+    if (physical_devices != []) and (FLAGS.gpu is not None):
+        tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
+        tf.config.experimental.set_memory_growth(physical_devices[FLAGS.gpu], True)
+    else:
+        tf.config.set_visible_devices([], 'GPU')
+
 
     if FLAGS.tiny:
         yolo = YoloV3Tiny(classes=FLAGS.num_classes)

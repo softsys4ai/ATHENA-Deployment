@@ -1,5 +1,6 @@
 from absl import app, flags, logging
 from absl.flags import FLAGS
+import skimage
 
 import tensorflow as tf
 import numpy as np
@@ -16,8 +17,6 @@ from yolov3_tf2.models import (
 )
 from yolov3_tf2.utils import freeze_all
 import yolov3_tf2.dataset as dataset
-#from yolov3_tf2 import dataset as dataset #this could be a bug
-import sys
 
 
 flags.DEFINE_string('dataset', '', 'path to dataset')
@@ -40,8 +39,8 @@ flags.DEFINE_enum('transfer', 'none',
                   'frozen: Transfer and freeze all, '
                   'fine_tune: Transfer all and freeze darknet only')
 flags.DEFINE_integer('size', 416, 'image size')
-flags.DEFINE_integer('epochs', 2, 'number of epochs')
-flags.DEFINE_integer('batch_size', 8, 'batch size')
+flags.DEFINE_integer('epochs', 10, 'number of epochs')
+flags.DEFINE_integer('batch_size', 16, 'batch size')
 flags.DEFINE_float('learning_rate', 1e-3, 'learning rate')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('weights_num_classes', None, 'specify num class for `weights` file if different, '
@@ -51,11 +50,11 @@ flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    if (physical_devices != []) and (FLAGS.gpu is not None):
+    if (physical_devices == []) and (FLAGS.gpu is not None):
         tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
         tf.config.experimental.set_memory_growth(physical_devices[FLAGS.gpu], True)
     else:
-        tf.config.set_visible_devices([], 'GPU')
+        tf.config.experimental.set_visible_devices([], 'GPU')
 
     if FLAGS.tiny:
         model = YoloV3Tiny(FLAGS.size, training=True,
@@ -67,6 +66,14 @@ def main(_argv):
         anchors = yolo_anchors
         anchor_masks = yolo_anchor_masks
 
+    def augmentation(x):
+        x = x.numpy()
+        x = skimage.util.random_noise(x, mode='gaussian', clip=True)
+        x = tf.image.resize(x, (FLAGS.size, FLAGS.size))
+
+        return x
+
+
     if FLAGS.dataset:
         train_dataset = dataset.load_tfrecord_dataset(
             FLAGS.dataset, FLAGS.classes, FLAGS.size)
@@ -76,14 +83,11 @@ def main(_argv):
     train_dataset = train_dataset.shuffle(buffer_size=512)
     train_dataset = train_dataset.batch(FLAGS.batch_size)
     train_dataset = train_dataset.map(lambda x, y: (
-        dataset.transform_images(x, FLAGS.size),
-        dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
-
-    logging.info("tensor? " + str(tf.executing_eagerly()))
+        tf.py_function(func=augmentation, inp=[x], Tout=tf.float32),
+        dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))#transform dataset
 
     train_dataset = train_dataset.prefetch(
         buffer_size=tf.data.experimental.AUTOTUNE)
-
     if FLAGS.val_dataset:
         val_dataset = dataset.load_tfrecord_dataset(
             FLAGS.val_dataset, FLAGS.classes, FLAGS.size)
@@ -91,8 +95,8 @@ def main(_argv):
         val_dataset = dataset.load_fake_dataset()
     val_dataset = val_dataset.batch(FLAGS.batch_size)
     val_dataset = val_dataset.map(lambda x, y: (
-        dataset.transform_images(x, FLAGS.size),
-        dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
+        tf.py_function(func=augmentation, inp=[x], Tout=tf.float32),
+        dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size))) #transform dataset
 
     # Configure the model for transfer learning
     if FLAGS.transfer == 'none':
@@ -197,13 +201,6 @@ def main(_argv):
             TensorBoard(log_dir='logs')
         ]
 
-        #print(train_dataset)
-        #print(type(train_dataset))
-        #print(train_dataset)
-        #print(train_dataset[1][0])
-        #print(train_dataset[1][1])
-        #print(train_dataset[1][2])
-
         history = model.fit(train_dataset,
                             epochs=FLAGS.epochs,
                             callbacks=callbacks,
@@ -216,12 +213,6 @@ if __name__ == '__main__':
     except SystemExit:
         pass
 
-#python train.py --dataset ./data/voc2012_train.tfrecord --val_dataset ./data/voc2012_val.tfrecord --classes ./data/voc2012.names --num_classes 20 --mode fit --transfer darknet --batch_size 16 --epochs 10 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_voc2017/yolov3_voc2017.tf
 
-#python train.py --dataset ./data/coco2017_train.tfrecord --val_dataset ./data/coco2017_train.tfrecord --classes ./data/coco.names --num_classes 80 --mode fit --transfer darknet --batch_size 16 --epochs 1 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_coco2017_trash/yolov3_coco2017_trash.tf
-
-#((None, 416, 416, 3), ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6)))
-#((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
-#((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
 
 
