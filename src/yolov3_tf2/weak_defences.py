@@ -29,17 +29,13 @@ class WeakDefence(object):
         elif self._trans_configs == 'poisson':
             x = skimage.util.random_noise(x, mode='poisson', seed=None, clip=True)
             return x
-        elif self._trans_configs == 'flip':
+        elif self._trans_configs == 'flip_both':
+            x = np.flip(x, axis=1)
             x = np.flip(x, axis=0)
             x = x / 255
             return x
-        elif self._trans_configs == 'mirror':
-            x = np.flip(x, axis=1)
-            x = x / 255
-            return x
-        elif self._trans_configs == 'compress_png':
-            encode_param = [cv2.IMWRITE_PNG_COMPRESSION, 80]
-            #x = x * 255
+        elif self._trans_configs == 'compress_png_8':
+            encode_param = [cv2.IMWRITE_PNG_COMPRESSION, 8]
             result, x = cv2.imencode('.png', x, encode_param)
             logging.info(result)
             x = cv2.imdecode(buf=x, flags=1)

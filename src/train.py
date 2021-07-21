@@ -93,6 +93,8 @@ def main(_argv):
     val_dataset = val_dataset.map(lambda x, y: (
         dataset.transform_images(x, FLAGS.size),
         dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
+    print(type(val_dataset))
+    print(tf.executing_eagerly())
 
     # Configure the model for transfer learning
     if FLAGS.transfer == 'none':
@@ -218,7 +220,7 @@ if __name__ == '__main__':
 
 #python train.py --dataset ./data/voc2012_train.tfrecord --val_dataset ./data/voc2012_val.tfrecord --classes ./data/voc2012.names --num_classes 20 --mode fit --transfer darknet --batch_size 16 --epochs 10 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_voc2017/yolov3_voc2017.tf
 
-#python train.py --dataset ./data/coco2017_train.tfrecord --val_dataset ./data/coco2017_train.tfrecord --classes ./data/coco.names --num_classes 80 --mode fit --transfer darknet --batch_size 16 --epochs 1 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_coco2017_trash/yolov3_coco2017_trash.tf
+#python train.py --dataset ./data/coco2017_train.tfrecord --val_dataset ./data/coco2017_train.tfrecord --classes ./data/coco.names --num_classes 80 --mode fit --transfer darknet --batch_size 16 --epochs 2 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_coco2017_trash/yolov3_coco2017_trash.tf
 
 #((None, 416, 416, 3), ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6)))
 #((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))

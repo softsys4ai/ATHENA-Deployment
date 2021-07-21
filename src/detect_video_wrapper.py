@@ -13,6 +13,7 @@ from yolov3_tf2.utils import draw_outputs, majority_voting
 
 import numpy as np #my thing to flip image
 from yolov3_tf2.weak_defences import WeakDefence
+import copy
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
@@ -49,8 +50,8 @@ def main(_argv):
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
 
-    wrapped_yolo = WeakDefence(yolo, 'clean', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
-    wrapped_yolo2 = WeakDefence(yolo2, 'compress_png', FLAGS.size)
+    wrapped_yolo = WeakDefence(yolo, 'flip_both', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
+    wrapped_yolo2 = WeakDefence(yolo2, 'clean', FLAGS.size)
 
 
     times = []
@@ -93,8 +94,8 @@ def main(_argv):
         #img_in = transform_images(img_in, FLAGS.size)
 
         t1 = time.time()
-        boxes, scores, classes, nums = wrapped_yolo.predict(img_in)
-        boxes2, scores2, classes2, nums2 = wrapped_yolo2.predict(img_in)
+        boxes, scores, classes, nums = wrapped_yolo.predict(copy.copy(img_in))
+        boxes2, scores2, classes2, nums2 = wrapped_yolo2.predict(copy.copy(img_in))
         t2 = time.time()
         times.append(t2-t1)
         times = times[-20:]
@@ -125,8 +126,8 @@ def main(_argv):
         valid_detections = num_valid_nms_boxes
         valid_detections = tf.expand_dims(valid_detections, axis=0)
 
-        img2 = draw_outputs(wrapped_yolo.get_image(img), majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 10), class_names)
-        img = draw_outputs(wrapped_yolo2.get_image(img), (boxes2, scores2, classes2, nums2), class_names)
+        img2 = draw_outputs(wrapped_yolo.get_image(copy.copy(img)), majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 10), class_names)
+        img = draw_outputs(wrapped_yolo2.get_image(copy.copy(img)), (boxes2, scores2, classes2, nums2), class_names)
         img_all = np.concatenate((img, img2), axis=1)
         img2 = cv2.putText(img2, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)

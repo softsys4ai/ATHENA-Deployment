@@ -1,9 +1,10 @@
 from absl import app, flags, logging
 from absl.flags import FLAGS
 import skimage
-import cv2
+
 import tensorflow as tf
 import numpy as np
+import cv2
 from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
     EarlyStopping,
@@ -71,8 +72,9 @@ def main(_argv):
         x = x.numpy()
         augmented_imgs = []
         for img in x:
-            img = np.flip(img, axis=1)
-            img = np.flip(img, axis=0)
+            encode_param = [cv2.IMWRITE_PNG_COMPRESSION, 8]
+            result, img = cv2.imencode('.png', img, encode_param)
+            img = cv2.imdecode(buf=img, flags=1)
             img = img / 255
             augmented_imgs.append(img)
         augmented_imgs = np.stack(augmented_imgs, axis=0)

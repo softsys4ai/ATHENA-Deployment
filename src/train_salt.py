@@ -68,10 +68,13 @@ def main(_argv):
 
     def augmentation(x):
         x = x.numpy()
-        x = skimage.util.random_noise(x, mode='salt', seed=None, amount=0.05)
-        x = tf.image.resize(x, (FLAGS.size, FLAGS.size))
-
-        return x
+        augmented_imgs = []
+        for img in x:
+            img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
+            augmented_imgs.append(img)
+        augmented_imgs = np.stack(augmented_imgs, axis=0)
+        augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))
+        return augmented_imgs
 
 
     if FLAGS.dataset:
