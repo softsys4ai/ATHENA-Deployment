@@ -50,7 +50,7 @@ flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    if (physical_devices == []) and (FLAGS.gpu is not None):
+    if (physical_devices != []) and (FLAGS.gpu is not None):
         tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
         tf.config.experimental.set_memory_growth(physical_devices[FLAGS.gpu], True)
     else:
@@ -67,15 +67,10 @@ def main(_argv):
         anchor_masks = yolo_anchor_masks
 
     def augmentation(x):
-        #augmented_imgs = []
         def map_func(img):
             img = img.numpy()
             img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
             return img
-        #for img in x:
-        #    img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
-        #    augmented_imgs.append(img)
-        #augmented_imgs = np.stack(augmented_imgs, axis=0)
         augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
         augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))
         return augmented_imgs
