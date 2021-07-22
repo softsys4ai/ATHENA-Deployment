@@ -67,12 +67,18 @@ def main(_argv):
         anchor_masks = yolo_anchor_masks
 
     def augmentation(x):
-        x = x.numpy()
-        augmented_imgs = []
-        for img in x:
+        #augmented_imgs = []
+        def map_func(img):
+            img = img.numpy()
+            print("inside", np.shape(img))
             img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
-            augmented_imgs.append(img)
-        augmented_imgs = np.stack(augmented_imgs, axis=0)
+            return img
+        #for img in x:
+        #    img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
+        #    augmented_imgs.append(img)
+        #augmented_imgs = np.stack(augmented_imgs, axis=0)
+        augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
+        print("outside",np.shape(augmented_imgs))
         augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))
         return augmented_imgs
 
