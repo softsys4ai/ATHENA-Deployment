@@ -19,8 +19,8 @@ from yolov3_tf2.utils import freeze_all
 import yolov3_tf2.dataset as dataset
 
 
-flags.DEFINE_string('dataset', '', 'path to dataset')
-flags.DEFINE_string('val_dataset', '', 'path to validation dataset')
+flags.DEFINE_string('dataset', './data/coco2017_train.tfrecord', 'path to dataset')
+flags.DEFINE_string('val_dataset', './data/coco2017_train.tfrecord', 'path to validation dataset')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
@@ -31,13 +31,14 @@ flags.DEFINE_enum('mode', 'fit', ['fit', 'eager_fit', 'eager_tf'],
                   'fit: model.fit, '
                   'eager_fit: model.fit(run_eagerly=True), '
                   'eager_tf: custom GradientTape')
-flags.DEFINE_enum('transfer', 'none',
-                  ['none', 'darknet', 'no_output', 'frozen', 'fine_tune'],
+flags.DEFINE_enum('transfer', 'yes',
+                  ['none', 'darknet', 'no_output', 'frozen', 'fine_tune', 'yes'],
                   'none: Training from scratch, '
                   'darknet: Transfer darknet, '
                   'no_output: Transfer all but output, '
                   'frozen: Transfer and freeze all, '
-                  'fine_tune: Transfer all and freeze darknet only')
+                  'fine_tune: Transfer all and freeze darknet only'
+                  'yes: resume training')
 flags.DEFINE_integer('size', 416, 'image size')
 flags.DEFINE_integer('epochs', 10, 'number of epochs')
 flags.DEFINE_integer('batch_size', 16, 'batch size')
@@ -128,7 +129,8 @@ def main(_argv):
                     l.set_weights(model_pretrained.get_layer(
                         l.name).get_weights())
                     freeze_all(l)
-
+    elif FLAGS.transfer == 'yes':
+        model.load_weights(FLAGS.weights)
     else:
         # All other transfer require matching classes
         model.load_weights(FLAGS.weights)

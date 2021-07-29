@@ -33,12 +33,13 @@ flags.DEFINE_enum('mode', 'fit', ['fit', 'eager_fit', 'eager_tf'],
                   'eager_fit: model.fit(run_eagerly=True), '
                   'eager_tf: custom GradientTape')
 flags.DEFINE_enum('transfer', 'none',
-                  ['none', 'darknet', 'no_output', 'frozen', 'fine_tune'],
+                  ['none', 'darknet', 'no_output', 'frozen', 'fine_tune', 'yes'],
                   'none: Training from scratch, '
                   'darknet: Transfer darknet, '
                   'no_output: Transfer all but output, '
                   'frozen: Transfer and freeze all, '
-                  'fine_tune: Transfer all and freeze darknet only')
+                  'fine_tune: Transfer all and freeze darknet only'
+                  'yes: resume training')
 flags.DEFINE_integer('size', 416, 'image size')
 flags.DEFINE_integer('epochs', 10, 'number of epochs')
 flags.DEFINE_integer('batch_size', 16, 'batch size')
@@ -133,7 +134,8 @@ def main(_argv):
                     l.set_weights(model_pretrained.get_layer(
                         l.name).get_weights())
                     freeze_all(l)
-
+    elif FLAGS.transfer == 'yes':
+        model.load_weights(FLAGS.weights)
     else:
         # All other transfer require matching classes
         model.load_weights(FLAGS.weights)

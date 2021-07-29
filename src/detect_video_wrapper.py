@@ -16,10 +16,10 @@ from yolov3_tf2.weak_defences import WeakDefence
 import copy
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3_clean/yolov3_clean.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3_salt/yolov3_salt_2_10.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
-flags.DEFINE_integer('size', 320, 'resize images to')
+flags.DEFINE_integer('size', 416, 'resize images to')
 flags.DEFINE_string('video', '0', #'./data/Office-Parkour.mp4'
                     'path to video file or number for webcam)')
 flags.DEFINE_string('output', None, 'path to output video')
@@ -50,7 +50,7 @@ def main(_argv):
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
 
-    wrapped_yolo = WeakDefence(yolo, 'compress_png_8', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
+    wrapped_yolo = WeakDefence(yolo, 'salt', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
     wrapped_yolo2 = WeakDefence(yolo2, 'clean', FLAGS.size)
 
 
