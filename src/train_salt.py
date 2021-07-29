@@ -69,6 +69,7 @@ def main(_argv):
     def augmentation(x):
         def map_func(img):
             img = img.numpy()
+            img /= 255
             img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
             return img
         augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
@@ -218,3 +219,5 @@ if __name__ == '__main__':
 
 
 
+#<MapDataset shapes: (<unknown>, ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6))), types: (tf.float32, (tf.float32, tf.float32, tf.float32))>
+#<MapDataset shapes: ((None, 416, 416, 3), ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6)))

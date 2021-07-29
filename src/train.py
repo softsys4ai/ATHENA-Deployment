@@ -20,8 +20,8 @@ import yolov3_tf2.dataset as dataset
 import sys
 
 
-flags.DEFINE_string('dataset', '', 'path to dataset')
-flags.DEFINE_string('val_dataset', '', 'path to validation dataset')
+flags.DEFINE_string('dataset', './data/coco2017_train.tfrecord', 'path to dataset')
+flags.DEFINE_string('val_dataset', './data/coco2017_train.tfrecord', 'path to validation dataset')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
@@ -70,6 +70,9 @@ def main(_argv):
     if FLAGS.dataset:
         train_dataset = dataset.load_tfrecord_dataset(
             FLAGS.dataset, FLAGS.classes, FLAGS.size)
+        for image, labels in train_dataset.take(20):
+            print('987 ', image[0][0])
+            print(image/255)
     else:
         train_dataset = dataset.load_fake_dataset()
 
@@ -78,6 +81,8 @@ def main(_argv):
     train_dataset = train_dataset.map(lambda x, y: (
         dataset.transform_images(x, FLAGS.size),
         dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
+
+
 
     logging.info("tensor? " + str(tf.executing_eagerly()))
 
@@ -93,8 +98,7 @@ def main(_argv):
     val_dataset = val_dataset.map(lambda x, y: (
         dataset.transform_images(x, FLAGS.size),
         dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
-    print(type(val_dataset))
-    print(tf.executing_eagerly())
+    print(val_dataset)
 
     # Configure the model for transfer learning
     if FLAGS.transfer == 'none':

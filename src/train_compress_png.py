@@ -73,8 +73,10 @@ def main(_argv):
             img = img.numpy()
             encode_param = [cv2.IMWRITE_PNG_COMPRESSION, 8]
             result, img = cv2.imencode('.png', img, encode_param)
-            img = cv2.imdecode(buf=img, flags=1)
+            # logging.info(result)
+            img = cv2.imdecode(img, cv2.IMREAD_COLOR)
             img = img / 255
+            img = skimage.util.img_as_float32(img)
             return img
         augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
         augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))

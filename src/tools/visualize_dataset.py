@@ -10,9 +10,9 @@ from yolov3_tf2.models import (
 from yolov3_tf2.dataset import load_tfrecord_dataset #TODO fix this
 from yolov3_tf2.utils import draw_outputs #TODO fix this no import
 
-flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
+flags.DEFINE_string('classes', '../data/coco.names', 'path to classes file')
 flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_string('dataset', './data/coco2017_train.tfrecord', 'path to dataset')
+flags.DEFINE_string('dataset', '../data/coco2017_train.tfrecord', 'path to dataset')
 flags.DEFINE_string('output', './output.jpg', 'path to output image')
 
 
@@ -22,8 +22,8 @@ def main(_argv):
 
     dataset = load_tfrecord_dataset(FLAGS.dataset, FLAGS.classes, FLAGS.size)
     dataset = dataset.shuffle(512)
-
-    for image, labels in dataset.take(1):
+    print(dataset)
+    for image, labels in dataset.take(5):
         boxes = []
         scores = []
         classes = []
@@ -46,7 +46,14 @@ def main(_argv):
                                                np.array(boxes[0][i])))
 
         img = cv2.cvtColor(image.numpy(), cv2.COLOR_RGB2BGR)
+        img = img / 255
+        print(img)
+        print(type(img))
+        print(np.shape(img))
+        print(type(img[0][0][0]))
         img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
+        cv2.imshow('out', img)
+        cv2.waitKey(9000)
         cv2.imwrite(FLAGS.output, img)
         logging.info('output saved to: {}'.format(FLAGS.output))
 

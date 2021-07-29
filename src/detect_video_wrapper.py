@@ -1,6 +1,6 @@
 import time
 
-#import skimage
+import skimage
 from absl import app, flags, logging
 from absl.flags import FLAGS
 import cv2
@@ -16,7 +16,7 @@ from yolov3_tf2.weak_defences import WeakDefence
 import copy
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3_clean/yolov3_clean.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 320, 'resize images to')
@@ -50,7 +50,7 @@ def main(_argv):
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
 
-    wrapped_yolo = WeakDefence(yolo, 'flip_both', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
+    wrapped_yolo = WeakDefence(yolo, 'compress_png_8', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
     wrapped_yolo2 = WeakDefence(yolo2, 'clean', FLAGS.size)
 
 
@@ -87,6 +87,7 @@ def main(_argv):
         #img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
 
         #img = skimage.util.random_noise(img, mode='salt', seed=None, clip=False, amount=0.0)  # noise
+        img = skimage.util.img_as_float32(img)
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         #img_in = img
@@ -126,14 +127,28 @@ def main(_argv):
         valid_detections = num_valid_nms_boxes
         valid_detections = tf.expand_dims(valid_detections, axis=0)
 
+        print('this1', wrapped_yolo.get_image(copy.copy(img))[100][100])
+        print('this2', wrapped_yolo2.get_image(copy.copy(img))[100][100])
+        print('this3', type(wrapped_yolo.get_image(copy.copy(img))[100][100][0]))
+        print('this4', type(wrapped_yolo2.get_image(copy.copy(img))[100][100][0]))
+
         img2 = draw_outputs(wrapped_yolo.get_image(copy.copy(img)), majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 10), class_names)
         img = draw_outputs(wrapped_yolo2.get_image(copy.copy(img)), (boxes2, scores2, classes2, nums2), class_names)
         img_all = np.concatenate((img, img2), axis=1)
         img2 = cv2.putText(img2, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
+        test_img = wrapped_yolo2.get_image(copy.copy(img))
+        print(test_img)
+        print(type(test_img))
+        print(np.shape(test_img))
+        print(type(test_img[0][0][0]))
         if FLAGS.output:
             out.write(img)
+        #img2 = img2.astype(np.float32)
+        #img = img.astype(np.float32)
+        img_all = np.concatenate((img2, img), axis=1)
+        print(type(img2[0][0][0]))
         cv2.imshow('output', img_all)
         if cv2.waitKey(1) == ord('q'):
             break

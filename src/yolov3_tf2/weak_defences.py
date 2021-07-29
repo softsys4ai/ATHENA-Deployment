@@ -15,7 +15,7 @@ class WeakDefence(object):
 
     def transformation(self, x):
         if self._trans_configs == 'clean':
-            x = x / 255
+            #x = x / 255
             return x
         elif self._trans_configs == 'gaussian':
             x = skimage.util.random_noise(x, mode='gaussian', seed=None, clip=True)
@@ -32,18 +32,21 @@ class WeakDefence(object):
         elif self._trans_configs == 'flip_both':
             x = np.flip(x, axis=1)
             x = np.flip(x, axis=0)
-            x = x / 255
+            #x = x / 255
             return x
         elif self._trans_configs == 'compress_png_8':
+            x = x * 255
             encode_param = [cv2.IMWRITE_PNG_COMPRESSION, 8]
             result, x = cv2.imencode('.png', x, encode_param)
-            logging.info(result)
-            x = cv2.imdecode(buf=x, flags=1)
+            #logging.info(result)
+            x = cv2.imdecode(x, cv2.IMREAD_COLOR)
             x = x / 255
+            x = skimage.util.img_as_float32(x)
+
             return x
         else:# TODO: clean is returned twice. should else throw an error?
             logging.info("no transformation selected")
-            x = x / 255
+            #x = x / 255
             return x
 
 
