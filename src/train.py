@@ -231,7 +231,7 @@ def main(_argv):
             #ReduceLROnPlateau(verbose=1, patience=1),
             EarlyStopping(patience=50, verbose=1),
             ModelCheckpoint(FLAGS.output[:-3] + '_{epoch}.tf',
-                            verbose=1, save_weights_only=True, save_freq=1),
+                            verbose=1, save_weights_only=True, save_freq=30),
             TensorBoard(log_dir='logs'),
             lr()
         ]
