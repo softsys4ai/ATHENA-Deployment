@@ -1,5 +1,7 @@
 from absl import app, flags, logging
 from absl.flags import FLAGS
+import cv2
+from tensorflow import keras
 
 import tensorflow as tf
 import numpy as np
@@ -33,16 +35,17 @@ flags.DEFINE_enum('mode', 'fit', ['fit', 'eager_fit', 'eager_tf'],
                   'eager_fit: model.fit(run_eagerly=True), '
                   'eager_tf: custom GradientTape')
 flags.DEFINE_enum('transfer', 'none',
-                  ['none', 'darknet', 'no_output', 'frozen', 'fine_tune'],
+                  ['none', 'darknet', 'no_output', 'frozen', 'fine_tune', 'yes'],
                   'none: Training from scratch, '
                   'darknet: Transfer darknet, '
                   'no_output: Transfer all but output, '
                   'frozen: Transfer and freeze all, '
-                  'fine_tune: Transfer all and freeze darknet only')
+                  'fine_tune: Transfer all and freeze darknet only'
+                  'yes: resume training')
 flags.DEFINE_integer('size', 416, 'image size')
-flags.DEFINE_integer('epochs', 2, 'number of epochs')
-flags.DEFINE_integer('batch_size', 8, 'batch size')
-flags.DEFINE_float('learning_rate', 1e-3, 'learning rate')
+flags.DEFINE_integer('epochs', 50, 'number of epochs')
+flags.DEFINE_integer('batch_size', 64, 'batch size')
+flags.DEFINE_float('learning_rate', 3.7e-7, 'learning rate')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('weights_num_classes', None, 'specify num class for `weights` file if different, '
                      'useful in transfer learning with different number of classes')
@@ -70,9 +73,6 @@ def main(_argv):
     if FLAGS.dataset:
         train_dataset = dataset.load_tfrecord_dataset(
             FLAGS.dataset, FLAGS.classes, FLAGS.size)
-        for image, labels in train_dataset.take(20):
-            print('987 ', image[0][0])
-            print(image/255)
     else:
         train_dataset = dataset.load_fake_dataset()
 
@@ -81,8 +81,6 @@ def main(_argv):
     train_dataset = train_dataset.map(lambda x, y: (
         dataset.transform_images(x, FLAGS.size),
         dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
-
-
 
     logging.info("tensor? " + str(tf.executing_eagerly()))
 
@@ -127,7 +125,8 @@ def main(_argv):
                     l.set_weights(model_pretrained.get_layer(
                         l.name).get_weights())
                     freeze_all(l)
-
+    elif FLAGS.transfer == 'yes':
+        model.load_weights(FLAGS.weights)
     else:
         # All other transfer require matching classes
         model.load_weights(FLAGS.weights)
@@ -195,21 +194,47 @@ def main(_argv):
         model.compile(optimizer=optimizer, loss=loss,
                       run_eagerly=(FLAGS.mode == 'eager_fit'))
 # checkpoints/yolov3_train_{epoch}.tf
+
+
+
+        class lr(keras.callbacks.Callback):
+            def on_epoch_begin(self, epoch, logs=None):
+                lr = self.model.optimizer.lr
+                tf.print(lr)
+
+        class burn_in(keras.callbacks.Callback):
+
+            def __init__(self):
+                self.burn = False
+
+            def on_epoch_begin(self, epoch, logs=None):
+                if epoch < 4:
+                    slope = FLAGS.learning_rate / 4
+                    self.model.optimizer.lr = slope * epoch
+                    logging.info(self.model.optimizer.lr)
+            #def on_epoch_begin(self, epoch, logs=None):
+            #    if epoch < 1:
+            #        self.burn = True
+            #        #self.model.optimizer.lr = 0.1
+            #    else:
+            #        self.burn = False
+
+            #def on_batch_begin(self, batch, logs=None):
+            #    if self.burn:
+            #        slope = FLAGS.learning_rate / 4
+            #        self.model.optimizer.lr = slope * batch
+            #        logging.info(self.model.optimizer.lr)
+
+        train_dataset = train_dataset.take(2)
+        val_dataset = val_dataset.take(1)
         callbacks = [
-            ReduceLROnPlateau(verbose=1),
-            EarlyStopping(patience=3, verbose=1),
+            #ReduceLROnPlateau(verbose=1, patience=1),
+            EarlyStopping(patience=50, verbose=1),
             ModelCheckpoint(FLAGS.output[:-3] + '_{epoch}.tf',
-                            verbose=1, save_weights_only=True),
-            TensorBoard(log_dir='logs')
+                            verbose=1, save_weights_only=True, save_freq=1),
+            TensorBoard(log_dir='logs'),
+            lr()
         ]
-
-        #print(train_dataset)
-        #print(type(train_dataset))
-        #print(train_dataset)
-        #print(train_dataset[1][0])
-        #print(train_dataset[1][1])
-        #print(train_dataset[1][2])
-
         history = model.fit(train_dataset,
                             epochs=FLAGS.epochs,
                             callbacks=callbacks,

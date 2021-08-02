@@ -32,7 +32,7 @@ class WeakDefence(object):
         elif self._trans_configs == 'flip_both':
             x = np.flip(x, axis=1)
             x = np.flip(x, axis=0)
-            #x = x / 255
+            x = x / 255
             return x
         elif self._trans_configs == 'compress_png_8':
             x = x * 255
@@ -46,7 +46,7 @@ class WeakDefence(object):
             return x
         else:# TODO: clean is returned twice. should else throw an error?
             logging.info("no transformation selected")
-            #x = x / 255
+            x = x / 255
             return x
 
 

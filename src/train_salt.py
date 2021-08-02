@@ -1,6 +1,7 @@
 from absl import app, flags, logging
 from absl.flags import FLAGS
 import skimage
+import cv2
 
 import tensorflow as tf
 import numpy as np
@@ -31,7 +32,7 @@ flags.DEFINE_enum('mode', 'fit', ['fit', 'eager_fit', 'eager_tf'],
                   'fit: model.fit, '
                   'eager_fit: model.fit(run_eagerly=True), '
                   'eager_tf: custom GradientTape')
-flags.DEFINE_enum('transfer', 'yes',
+flags.DEFINE_enum('transfer', 'none',
                   ['none', 'darknet', 'no_output', 'frozen', 'fine_tune', 'yes'],
                   'none: Training from scratch, '
                   'darknet: Transfer darknet, '

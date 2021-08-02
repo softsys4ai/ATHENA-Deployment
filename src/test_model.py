@@ -9,21 +9,23 @@ from yolov3_tf2.models import (
 )
 from yolov3_tf2.dataset import transform_images
 from yolov3_tf2.utils import draw_outputs
+from yolov3_tf2.weak_defences import WeakDefence
 
 import numpy as np #my thing to flip image
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3_salt/yolov3_salt_3_1.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_string('video', './data/Office-Parkour.mp4',
+flags.DEFINE_string('video', '0',
                     'path to video file or number for webcam)')
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('rotate', 0, 'degrees to rotate image')
 flags.DEFINE_integer('gpu', None, 'set which gpu to use')
+flags.DEFINE_string('wd', 'salt', 'transformation')
 
 
 def main(_argv):
@@ -34,12 +36,16 @@ def main(_argv):
     else:
         tf.config.set_visible_devices([], 'GPU')
 
+    print(FLAGS.num_classes)
     if FLAGS.tiny:
         yolo = YoloV3Tiny(classes=FLAGS.num_classes)
     else:
         yolo = YoloV3(classes=FLAGS.num_classes)
 
+    logging.info('yuh')
     yolo.load_weights(FLAGS.weights)
+
+    wrapped_yolo = WeakDefence(yolo, FLAGS.wd, FLAGS.size)
     logging.info('weights loaded')
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
@@ -69,21 +75,10 @@ def main(_argv):
             time.sleep(0.1)
             continue
 
-        def rotate_image(image, angle):
-            image_center = tuple(np.array(image.shape[1::-1]) / 2)
-            rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-            result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
-            return result
-
-        img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        #img_in = skimage.util.random_noise(img_in, mode='salt', seed=None, clip=False, amount=0.01)  # noise
-        img_in = tf.expand_dims(img_in, 0)
-        img_in = transform_images(img_in, FLAGS.size)
-
 
         t1 = time.time()
-        boxes, scores, classes, nums = yolo.predict(img_in)
+        boxes, scores, classes, nums = wrapped_yolo.predict(img_in)
         t2 = time.time()
         times.append(t2-t1)
         times = times[-20:]

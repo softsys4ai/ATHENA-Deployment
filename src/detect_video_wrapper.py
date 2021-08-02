@@ -16,7 +16,7 @@ from yolov3_tf2.weak_defences import WeakDefence
 import copy
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3_salt/yolov3_salt_2_10.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3_salt/yolov3_salt_3_1.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
@@ -50,8 +50,8 @@ def main(_argv):
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
 
-    wrapped_yolo = WeakDefence(yolo, 'salt', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
-    wrapped_yolo2 = WeakDefence(yolo2, 'clean', FLAGS.size)
+    wrapped_yolo = WeakDefence(yolo, 'clean', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
+    wrapped_yolo2 = WeakDefence(yolo2, 'salt', FLAGS.size)
 
 
     times = []
