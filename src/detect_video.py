@@ -12,6 +12,8 @@ from yolov3_tf2.utils import draw_outputs
 
 import numpy as np #my thing to flip image
 
+from memory_profiler import profile
+
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
@@ -25,7 +27,7 @@ flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('rotate', 0, 'degrees to rotate image')
 flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
-
+@profile
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     if (physical_devices != []) and (FLAGS.gpu is not None):

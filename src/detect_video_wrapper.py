@@ -8,12 +8,13 @@ import tensorflow as tf
 from yolov3_tf2.models import (
     YoloV3, YoloV3Tiny
 )
-from yolov3_tf2.dataset import transform_images
 from yolov3_tf2.utils import draw_outputs, majority_voting
 
 import numpy as np #my thing to flip image
 from yolov3_tf2.weak_defences import WeakDefence
 import copy
+
+from memory_profiler import profile
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_string('weights', './checkpoints/yolov3_salt/yolov3_salt_3_1.tf',
@@ -28,6 +29,7 @@ flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('rotate', 0, 'degrees to rotate image')
 flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
+@profile()
 def main(_argv):
     tf.config.run_functions_eagerly(False)
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
