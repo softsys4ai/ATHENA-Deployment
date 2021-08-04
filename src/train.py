@@ -9,7 +9,7 @@ from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
     EarlyStopping,
     ModelCheckpoint,
-    TensorBoard
+    TensorBoard,
 )
 from yolov3_tf2.models import (
     YoloV3, YoloV3Tiny, YoloLoss,
@@ -27,7 +27,7 @@ flags.DEFINE_string('val_dataset', './data/coco2017_train.tfrecord', 'path to va
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
-flags.DEFINE_string('output', './checkpoints/yolov3_trash/yolov3_trash.tf',
+flags.DEFINE_string('output', './checkpoints/yolov3_trash/yolov3_trash_dark_3.tf',
                     'path to save')
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_enum('mode', 'fit', ['fit', 'eager_fit', 'eager_tf'],
@@ -44,8 +44,8 @@ flags.DEFINE_enum('transfer', 'none',
                   'yes: resume training')
 flags.DEFINE_integer('size', 416, 'image size')
 flags.DEFINE_integer('epochs', 50, 'number of epochs')
-flags.DEFINE_integer('batch_size', 64, 'batch size')
-flags.DEFINE_float('learning_rate', 3.7e-7, 'learning rate')
+flags.DEFINE_integer('batch_size', 4, 'batch size')
+flags.DEFINE_float('learning_rate', 0, 'learning rate')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('weights_num_classes', None, 'specify num class for `weights` file if different, '
                      'useful in transfer learning with different number of classes')
@@ -139,6 +139,7 @@ def main(_argv):
             freeze_all(model)
 
     optimizer = tf.keras.optimizers.Adam(lr=FLAGS.learning_rate)
+    #optimizer = tf.keras.optimizers.SGD(momentum=0.9127, learning_rate=0.00001)
     loss = [YoloLoss(anchors[mask], classes=FLAGS.num_classes)
             for mask in anchor_masks]
 
@@ -202,14 +203,19 @@ def main(_argv):
                 lr = self.model.optimizer.lr
                 tf.print(lr)
 
+        class save(keras.callbacks.Callback):
+            def on_epoch_begin(self, epoch, logs=None):
+                self.model.save(FLAGS.output)
+                tf.print("saving")
+
         class burn_in(keras.callbacks.Callback):
 
             def __init__(self):
                 self.burn = False
 
             def on_epoch_begin(self, epoch, logs=None):
-                if epoch < 4:
-                    slope = FLAGS.learning_rate / 4
+                if epoch < 3:
+                    slope = FLAGS.learning_rate / 2
                     self.model.optimizer.lr = slope * epoch
                     logging.info(self.model.optimizer.lr)
             #def on_epoch_begin(self, epoch, logs=None):
@@ -225,16 +231,18 @@ def main(_argv):
             #        self.model.optimizer.lr = slope * batch
             #        logging.info(self.model.optimizer.lr)
 
-        train_dataset = train_dataset.take(2)
-        val_dataset = val_dataset.take(1)
+        train_dataset = train_dataset.take(1)
+        val_dataset = train_dataset #val_dataset.take(1)
+        logs = tf.keras.callbacks.TensorBoard(log_dir='logs', histogram_freq=1)
         callbacks = [
-            #ReduceLROnPlateau(verbose=1, patience=1),
+            ReduceLROnPlateau(monitor="val_loss", factor=0.1, patience=3, verbose=1),
             EarlyStopping(patience=50, verbose=1),
             ModelCheckpoint(FLAGS.output[:-3] + '_{epoch}.tf',
-                            verbose=1, save_weights_only=True, save_freq=30),
-            TensorBoard(log_dir='logs'),
+                            verbose=1, save_weights_only=True, save_freq=1),
+            logs,
             lr()
         ]
+        #TensorBoard(log_dir='logs2')
         history = model.fit(train_dataset,
                             epochs=FLAGS.epochs,
                             callbacks=callbacks,
@@ -256,3 +264,4 @@ if __name__ == '__main__':
 #((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
 
 
+#monitor="val_loss", factor=0.1, patience=3, verbose=1

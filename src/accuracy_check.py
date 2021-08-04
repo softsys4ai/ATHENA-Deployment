@@ -16,7 +16,7 @@ from yolov3_tf2.weak_defences import WeakDefence
 import copy
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3_trash/yolov3_trash_1.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3_trash/yolov3_trash_dark_2.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
@@ -45,7 +45,8 @@ def main(_argv):
 
     yolo.load_weights('./checkpoints/yolov3/yolov3.tf')
     yolo2.load_weights(FLAGS.weights)
-
+    print(yolo.summary())
+    print(yolo2.summary())
     logging.info('weights loaded')
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
