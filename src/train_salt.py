@@ -107,9 +107,6 @@ def main(_argv):
         tf.py_function(func=augmentation, inp=[x], Tout=tf.float32),
         dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size))) #transform dataset
 
-    print(train_dataset)
-    print("\n\n\n" + str(train_dataset.take(1)))
-    print("\n\n\n" + str(train_dataset.take(2)))
     # Configure the model for transfer learning
     if FLAGS.transfer == 'none':
         pass  # Nothing to do
