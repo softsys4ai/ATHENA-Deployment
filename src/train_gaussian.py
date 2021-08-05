@@ -18,6 +18,7 @@ from yolov3_tf2.models import (
 from yolov3_tf2.utils import freeze_all
 import yolov3_tf2.dataset as dataset
 
+import cv2
 
 flags.DEFINE_string('dataset', '', 'path to dataset')
 flags.DEFINE_string('val_dataset', '', 'path to validation dataset')
@@ -70,9 +71,8 @@ def main(_argv):
     def augmentation(x):
         def map_func(img):
             img = img.numpy()
-            img /= 255
+            img = img / 255
             img = skimage.util.random_noise(img, mode='gaussian', clip=True)
-            img = skimage.util.img_as_float32(img)
             return img
         augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
         augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))

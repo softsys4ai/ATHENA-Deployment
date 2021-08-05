@@ -71,7 +71,7 @@ def main(_argv):
     def augmentation(x):
         def map_func(img):
             img = img.numpy()
-            img /= 255
+            img = img / 255
             img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
             while True:
                 if cv2.waitKey(1) == ord('q'):
