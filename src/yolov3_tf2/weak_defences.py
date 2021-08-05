@@ -15,7 +15,7 @@ class WeakDefence(object):
 
     def transformation(self, x):
         if self._trans_configs == 'clean':
-            #x = x / 255
+            x = x / 255
             return x
         elif self._trans_configs == 'gaussian':
             x = skimage.util.random_noise(x, mode='gaussian', seed=None, clip=True)

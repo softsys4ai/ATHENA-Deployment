@@ -40,9 +40,9 @@ flags.DEFINE_enum('transfer', 'none',
                   'frozen: Transfer and freeze all, '
                   'fine_tune: Transfer all and freeze darknet only'
                   'yes: resume training')
-flags.DEFINE_integer('size', 416, 'image size')
+flags.DEFINE_integer('size', 608, 'image size')
 flags.DEFINE_integer('epochs', 10, 'number of epochs')
-flags.DEFINE_integer('batch_size', 16, 'batch size')
+flags.DEFINE_integer('batch_size', 2, 'batch size')
 flags.DEFINE_float('learning_rate', 1e-3, 'learning rate')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('weights_num_classes', None, 'specify num class for `weights` file if different, '
@@ -73,6 +73,10 @@ def main(_argv):
             img = img.numpy()
             img /= 255
             img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
+            while True:
+                if cv2.waitKey(1) == ord('q'):
+                    cv2.destroyAllWindows()
+                    break
             return img
         augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
         augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))
@@ -103,6 +107,9 @@ def main(_argv):
         tf.py_function(func=augmentation, inp=[x], Tout=tf.float32),
         dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size))) #transform dataset
 
+    print(train_dataset)
+    print("\n\n\n" + str(train_dataset.take(1)))
+    print("\n\n\n" + str(train_dataset.take(2)))
     # Configure the model for transfer learning
     if FLAGS.transfer == 'none':
         pass  # Nothing to do
@@ -148,6 +155,7 @@ def main(_argv):
             for mask in anchor_masks]
 
     if FLAGS.mode == 'eager_tf':
+        logging.info("flag 1")
         # Eager mode is great for debugging
         # Non eager graph mode is recommended for real training
         avg_loss = tf.keras.metrics.Mean('loss', dtype=tf.float32)
@@ -155,6 +163,8 @@ def main(_argv):
 
         for epoch in range(1, FLAGS.epochs + 1):
             for batch, (images, labels) in enumerate(train_dataset):
+                logging.info("flag 2")
+                print(batch, images)
                 with tf.GradientTape() as tape:
                     outputs = model(images, training=True)
                     regularization_loss = tf.reduce_sum(model.losses)
@@ -201,8 +211,8 @@ def main(_argv):
 # checkpoints/yolov3_train_{epoch}.tf
 
         callbacks = [
-            ReduceLROnPlateau(monitor="val_loss", factor=0.1, patience=1, verbose=1),
-            EarlyStopping(patience=5, verbose=1),
+            ReduceLROnPlateau(monitor="val_loss", factor=0.1, patience=2, verbose=1),
+            EarlyStopping(patience=7, verbose=1),
             ModelCheckpoint(FLAGS.output[:-3] + '_{epoch}.tf',
                             verbose=1, save_weights_only=True),
             TensorBoard(log_dir='logs')

@@ -52,8 +52,8 @@ def main(_argv):
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
 
-    wrapped_yolo = WeakDefence(yolo, 'clean', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
-    wrapped_yolo2 = WeakDefence(yolo2, 'clean', FLAGS.size)
+    wrapped_yolo = WeakDefence(yolo, 'salt', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
+    wrapped_yolo2 = WeakDefence(yolo2, 'salt', FLAGS.size)
 
 
     times = []
@@ -88,6 +88,8 @@ def main(_argv):
 
         img = skimage.util.img_as_float32(img)
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        #img_in = tf.expand_dims(img_in, 0)
+        #img_in = transform_images(img_in, FLAGS.size)
 
 
         t1 = time.time()

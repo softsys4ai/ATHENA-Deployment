@@ -200,8 +200,8 @@ def main(_argv):
                       run_eagerly=(FLAGS.mode == 'eager_fit'))
 # checkpoints/yolov3_train_{epoch}.tf
         callbacks = [
-            ReduceLROnPlateau(verbose=1),
-            EarlyStopping(patience=3, verbose=1),
+            ReduceLROnPlateau(monitor="val_loss", factor=0.1, patience=2, verbose=1),
+            EarlyStopping(patience=7, verbose=1),
             ModelCheckpoint(FLAGS.output[:-3] + '_{epoch}.tf',
                             verbose=1, save_weights_only=True),
             TensorBoard(log_dir='logs')
