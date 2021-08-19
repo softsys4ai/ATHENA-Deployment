@@ -15,18 +15,22 @@ class WeakDefence(object):
 
     def transformation(self, x):
         if self._trans_configs == 'clean':
-            #x = x / 255
+            x = x / 255
             return x
         elif self._trans_configs == 'gaussian':
+            x = x / 255
             x = skimage.util.random_noise(x, mode='gaussian', seed=None, clip=True)
             return x
         elif self._trans_configs == 'salt':
+            x = x / 255
             x = skimage.util.random_noise(x, mode='salt', seed=None, amount=0.05)
             return x
         elif self._trans_configs == 'pepper':
+            x = x / 255
             x = skimage.util.random_noise(x, mode='pepper', seed=None, amount=0.05)
             return x
         elif self._trans_configs == 'poisson':
+            x = x / 255
             x = skimage.util.random_noise(x, mode='poisson', seed=None, clip=True)
             return x
         elif self._trans_configs == 'flip_both':

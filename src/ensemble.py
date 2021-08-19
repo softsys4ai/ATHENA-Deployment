@@ -1,6 +1,7 @@
 from absl import app, flags, logging
-from absl.flags import FLAGS
-import tensorflow as tf
+from absl.flags import FLAGS 
+import cv2 
+import tensorflow as tf 
 from yolov3_tf2.models import (
     YoloV3, YoloV3Tiny
 )
@@ -9,7 +10,7 @@ from yolov3_tf2.utils import draw_outputs, majority_voting
 
 import numpy as np #my thing to flip image
 from yolov3_tf2.weak_defences import WeakDefence
-import cv2
+#import cv2
 
 flags.DEFINE_list('wds', ['clean'], 'type the desired weak defence. type the name multiple times for multiple '
                                          'instances of WD')
@@ -32,7 +33,7 @@ def main(_argv):
     #    open(FLAGS.image, 'rb').read(), channels=3)
     #img = tf.expand_dims(img_raw, 0)
     #img = transform_images(img, FLAGS.size)
-    img = cv2.imread(FLAGS.image)
+    img = cv2.imread(FLAGS.image).astype('float32')
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
@@ -41,16 +42,24 @@ def main(_argv):
     for wd in FLAGS.wds:
         wd_model = YoloV3(classes=FLAGS.num_classes)
         weights = f'./checkpoints/yolov3_{wd}/yolov3_{wd}.tf'
-        wd_model.load_weights(weights)
+        wd_model.load_weights(weights).expect_partial()
         models.append(WeakDefence(wd_model, wd, FLAGS.size))
     logging.info('ensemble loaded')
 
     boxes = []
     scores = []
     classes = []
+
+    @tf.function #(input_signature=(tf.TensorSpec(shape=[None], dtype=tf.float32),))
+    def serve(x):
+        print('tracing')
+        return yolo(x, training=False)
+
     for model in models:
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        boxes_temp, scores_temp, classes_temp, _ = model.predict(tf.identity(img_in))
+        #boxes_temp, scores_temp, classes_temp, nums_temp = serve(img_in)
+        boxes_temp, scores_temp, classes_temp, nums = model.predict(img_in)
+        print(nums)
         boxes = np.concatenate((boxes, boxes_temp), axis=1) if np.size(boxes) else boxes_temp
         scores = np.concatenate((scores, scores_temp), axis=1) if np.size(scores) else scores_temp
         classes = np.concatenate((classes, classes_temp), axis=1) if np.size(classes) else classes_temp
@@ -76,7 +85,7 @@ def main(_argv):
     valid_detections = num_valid_nms_boxes
     valid_detections = tf.expand_dims(valid_detections, axis=0)
 
-    img = draw_outputs(img, majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 10), class_names)
+    img = draw_outputs(img, majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 1), class_names)
     #cv2.imshow('ensemble', img)
 
     cv2.imwrite('output.jpg', img)

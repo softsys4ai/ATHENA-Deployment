@@ -1,0 +1,9 @@
+[8]
+[4]
+I0816 17:08:57.480841 547867635728 utils.py:212] [[<tf.Tensor: shape=(), dtype=int64, numpy=41>, <tf.Tensor: shape=(), dtype=int64, numpy=41>], [<tf.Tensor: shape=(), dtype=int64, numpy=0>], [<tf.Tensor: shape=(), dtype=int64, numpy=63>], [<tf.Tensor: shape=(), dtype=int64, numpy=47>], [<tf.Tensor: shape=(), dtype=int64, numpy=67>], [<tf.Tensor: shape=(), dtype=int64, numpy=74>], [<tf.Tensor: shape=(), dtype=int64, numpy=41>]]
+error
+
+[3]
+[8]
+I0816 17:14:15.308591 548310605840 utils.py:212] [[<tf.Tensor: shape=(), dtype=int64, numpy=41>], [<tf.Tensor: shape=(), dtype=int64, numpy=0>], [<tf.Tensor: shape=(), dtype=int64, numpy=63>], [<tf.Tensor: shape=(), dtype=int64, numpy=47>], [<tf.Tensor: shape=(), dtype=int64, numpy=67>], [<tf.Tensor: shape=(), dtype=int64, numpy=74>], [<tf.Tensor: shape=(), dtype=int64, numpy=41>]]
+

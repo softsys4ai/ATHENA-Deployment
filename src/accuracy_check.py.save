@@ -1,5 +1,6 @@
 import time
 
+import skimage
 from absl import app, flags, logging
 from absl.flags import FLAGS
 import cv2
@@ -8,18 +9,18 @@ from yolov3_tf2.models import (
     YoloV3, YoloV3Tiny
 )
 from yolov3_tf2.dataset import transform_images
-from yolov3_tf2.utils import draw_outputs
+from yolov3_tf2.utils import draw_outputs, majority_voting
 
 import numpy as np #my thing to flip image
-
-#from memory_profiler import profile
+from yolov3_tf2.weak_defences import WeakDefence
+import copy
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3_salt/yolov3_salt_3.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_string('video', './data/Office-Parkour.mp4',
+flags.DEFINE_string('video', '0', #'./data/Office-Parkour.mp4'
                     'path to video file or number for webcam)')
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
@@ -28,34 +29,37 @@ flags.DEFINE_integer('rotate', 0, 'degrees to rotate image')
 flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
 def main(_argv):
+    tf.config.run_functions_eagerly(False)
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     if (physical_devices != []) and (FLAGS.gpu is not None):
-        #tf.config.set_logical_device_configuration(physical_devices[0], [tf.config.LogicalDeviceConfiguration(memory_limit=500)])
         tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
         tf.config.experimental.set_memory_growth(physical_devices[FLAGS.gpu], True)
-        #tf.config.set_logical_device_configuration(physical_devices[0], [tf.config.LogicalDeviceConfiguration(memory_limit=500)])
     else:
         tf.config.set_visible_devices([], 'GPU')
-        logging.info("yuh")
 
-    tf.config.run_functions_eagerly(False)
-    #tf.config.experimental.enable_mlir_graph_optimization()
-    logging.info("yes" + str(tf.config.get_visible_devices()))
     if FLAGS.tiny:
         yolo = YoloV3Tiny(classes=FLAGS.num_classes)
     else:
         yolo = YoloV3(classes=FLAGS.num_classes)
+        yolo2 = YoloV3(classes=FLAGS.num_classes)
 
-    yolo.load_weights(FLAGS.weights)
+    yolo.load_weights('./checkpoints/yolov3_clean/yolov3_clean.tf')
+    yolo2.load_weights(FLAGS.weights)
+    print(yolo.summary())
+    print(yolo2.summary())
     logging.info('weights loaded')
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
 
+    wrapped_yolo = WeakDefence(yolo, 'salt', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
+    wrapped_yolo2 = WeakDefence(yolo2, 'salt', FLAGS.size)
+
+
     times = []
 
     try:
-        vid = cv2.VideoCapture(int(FLAGS.video), cv2.CAP_GSTREAMER)
+        vid = cv2.VideoCapture(int(FLAGS.video))
     except:
         vid = cv2.VideoCapture(FLAGS.video)
 
@@ -69,20 +73,11 @@ def main(_argv):
         codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
-    img_in = None #del this
-
-    @tf.function #(input_signature=(tf.TensorSpec(shape=[None], dtype=tf.float32),))
-    def serve(x):
-        print('tracing')
-        return yolo(x, training=False)
-
     while True:
-        #t1 = time.time()
-
         _, img = vid.read()
         if img is None:
-            logging.info("Empty Frame")
-            #time.sleep(0.1)
+            logging.warning("Empty Frame")
+            time.sleep(0.1)
             continue
 
         def rotate_image(image, angle):
@@ -91,43 +86,30 @@ def main(_argv):
             result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
             return result
 
-        #img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
+        img = skimage.util.img_as_float32(img)
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        ####img_in = skimage.util.random_noise(img_in, mode='salt', seed=None, clip=False, amount=0.01)  # noise
-        img_in = tf.expand_dims(img_in, 0)
-        img_in = transform_images(img_in, FLAGS.size)
-        #logging.info('done') #del this
-        #t2 = time.time()
-        #times.append(t2-t1)
-        #times = times[-20:]
-
-        #logging.info(times[-1])
-
-        #break #del this
-
-    #while True: #del this
+       # img_in = tf.expand_dims(img_in, 0)
+       # img_in = transform_images(img_in, FLAGS.size)
 
         t1 = time.time()
-        #print(type(img_in))
-        boxes, scores, classes, nums = serve(img_in)
-        boxes, scores, classes, nums = serve(img_in)
-        boxes, scores, classes, nums = serve(img_in)
+        boxes, scores, classes, nums = wrapped_yolo.predict(copy.copy(img_in))
+        boxes2, scores2, classes2, nums2 = wrapped_yolo2.predict(copy.copy(img_in))
         t2 = time.time()
         times.append(t2-t1)
         times = times[-20:]
 
-        img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
 
-        #t2 = time.time()
-        #times.append(t2-t1)
-        #times = times[-20:]
-
-        img = cv2.putText(img, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
+        output1 = draw_outputs(wrapped_yolo.get_image(copy.copy(img)), (boxes, scores, classes, nums), class_names)
+        output2 = draw_outputs(wrapped_yolo2.get_image(copy.copy(img)), (boxes2, scores2, classes2, nums2), class_names)
+        times.append(t2-t1)
+        times = times[-20:]
+        img_all = np.concatenate((output1, output2), axis=1)
+        img_all = cv2.putText(img_all, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
-        #if FLAGS.output:
-           # out.write(img)
-        cv2.imshow('output', img)
+        if FLAGS.output:
+            out.write(img)
+        cv2.imshow('output', img_all)
         if cv2.waitKey(1) == ord('q'):
             break
 

@@ -38,7 +38,6 @@ def main(_argv):
         tf.config.set_visible_devices([], 'GPU')
         logging.info("yuh")
 
-    tf.config.run_functions_eagerly(False)
     #tf.config.experimental.enable_mlir_graph_optimization()
     logging.info("yes" + str(tf.config.get_visible_devices()))
     if FLAGS.tiny:
@@ -55,7 +54,7 @@ def main(_argv):
     times = []
 
     try:
-        vid = cv2.VideoCapture(int(FLAGS.video), cv2.CAP_GSTREAMER)
+        vid = cv2.VideoCapture(int(FL)
     except:
         vid = cv2.VideoCapture(FLAGS.video)
 
@@ -70,14 +69,8 @@ def main(_argv):
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
     img_in = None #del this
-
-    @tf.function #(input_signature=(tf.TensorSpec(shape=[None], dtype=tf.float32),))
-    def serve(x):
-        print('tracing')
-        return yolo(x, training=False)
-
     while True:
-        #t1 = time.time()
+        t1 = time.time()
 
         _, img = vid.read()
         if img is None:
@@ -97,45 +90,44 @@ def main(_argv):
         img_in = tf.expand_dims(img_in, 0)
         img_in = transform_images(img_in, FLAGS.size)
         #logging.info('done') #del this
-        #t2 = time.time()
-        #times.append(t2-t1)
-        #times = times[-20:]
-
-        #logging.info(times[-1])
-
-        #break #del this
-
-    #while True: #del this
-
-        t1 = time.time()
-        #print(type(img_in))
-        boxes, scores, classes, nums = serve(img_in)
-        boxes, scores, classes, nums = serve(img_in)
-        boxes, scores, classes, nums = serve(img_in)
         t2 = time.time()
         times.append(t2-t1)
         times = times[-20:]
 
-        img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
+        logging.info(times[-1])
 
+        #break #del this
+
+    while True: #del this
+        logging.info('yuh')
+        t1 = time.time()
+        boxes, scores, classes, nums = yolo(img_in, training=False)
+        t2 = time.time()
+        times.append(t2-t1)
+        times = times[-20:]
+
+        logging.info(times[-1])
+        #img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
+        
         #t2 = time.time()
         #times.append(t2-t1)
         #times = times[-20:]
 
-        img = cv2.putText(img, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
-                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+        #img = cv2.putText(img, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
+        #                  cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
         #if FLAGS.output:
            # out.write(img)
-        cv2.imshow('output', img)
-        if cv2.waitKey(1) == ord('q'):
-            break
+        #cv2.imshow('output', img)
+       # if cv2.waitKey(1) == ord('q'):
+        #    break
 
-    cv2.destroyAllWindows()
+    #cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
     try:
+        tf.config.run_functions_eagerly(False)
         app.run(main)
     except SystemExit:
         pass
