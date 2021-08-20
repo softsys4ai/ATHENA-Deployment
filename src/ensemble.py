@@ -34,10 +34,10 @@ def main(_argv):
     #    open(FLAGS.image, 'rb').read(), channels=3)
     #img = tf.expand_dims(img_raw, 0)
     #img = transform_images(img, FLAGS.size)
-    img = cv2.imread(FLAGS.image)
-    img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img_in = tf.expand_dims(img_in, 0)
-    img_in = transform_images(img_in, FLAGS.size)
+    #img = cv2.imread(FLAGS.image)
+    #img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    #img_in = tf.expand_dims(img_in, 0)
+    #img_in = transform_images(img_in, FLAGS.size)
 
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
@@ -51,7 +51,22 @@ def main(_argv):
         models.append(WeakDefence(wd_model, wd, FLAGS.size))
     logging.info('ensemble loaded')
 
+    try:
+        vid = cv2.VideoCapture(int(FLAGS.video))
+    except:
+        vid = cv2.VideoCapture(FLAGS.video)
+
     while True:
+        _, img = vid.read()
+        if img is None:
+            logging.warning("Empty Frame")
+            time.sleep(0.1)
+            continue
+
+        img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img_in = tf.expand_dims(img_in, 0)
+        img_in = transform_images(img_in, FLAGS.size)
+
         time1 = time.time()
         boxes = []
         scores = []
