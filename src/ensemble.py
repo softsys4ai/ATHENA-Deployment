@@ -10,6 +10,8 @@ from yolov3_tf2.utils import draw_outputs, majority_voting
 import numpy as np #my thing to flip image
 from yolov3_tf2.weak_defences import WeakDefence
 import cv2
+import copy
+import time
 
 flags.DEFINE_list('wds', ['clean'], 'type the desired weak defence. type the name multiple times for multiple '
                                          'instances of WD')
@@ -49,40 +51,48 @@ def main(_argv):
         models.append(WeakDefence(wd_model, wd, FLAGS.size))
     logging.info('ensemble loaded')
 
-    boxes = []
-    scores = []
-    classes = []
-    for model in models:
-        boxes_temp, scores_temp, classes_temp, _ = model.predict(tf.identity(img_in))
-        boxes = np.concatenate((boxes, boxes_temp), axis=1) if np.size(boxes) else boxes_temp
-        scores = np.concatenate((scores, scores_temp), axis=1) if np.size(scores) else scores_temp
-        classes = np.concatenate((classes, classes_temp), axis=1) if np.size(classes) else classes_temp
+    while True:
+        time1 = time.time()
+        boxes = []
+        scores = []
+        classes = []
+        for model in models:
+            boxes_temp, scores_temp, classes_temp, _ = model.predict(tf.identity(img_in))
+            boxes = np.concatenate((boxes, boxes_temp), axis=1) if np.size(boxes) else boxes_temp
+            scores = np.concatenate((scores, scores_temp), axis=1) if np.size(scores) else scores_temp
+            classes = np.concatenate((classes, classes_temp), axis=1) if np.size(classes) else classes_temp
 
-    boxes = np.squeeze(boxes, axis=0)
-    scores = np.squeeze(scores, axis=0)
-    classes = np.squeeze(classes, axis=0)
+        boxes = np.squeeze(boxes, axis=0)
+        scores = np.squeeze(scores, axis=0)
+        classes = np.squeeze(classes, axis=0)
 
-    selected_indices, selected_scores = tf.image.non_max_suppression_with_scores(
-        boxes, scores, max_output_size=100, iou_threshold=0.5, score_threshold=0.5, soft_nms_sigma=0.5)
+        selected_indices, selected_scores = tf.image.non_max_suppression_with_scores(
+            boxes, scores, max_output_size=100, iou_threshold=0.5, score_threshold=0.5, soft_nms_sigma=0.5)
 
-    num_valid_nms_boxes = tf.shape(selected_indices)[0]
+        num_valid_nms_boxes = tf.shape(selected_indices)[0]
 
-    selected_indices = tf.concat([selected_indices, tf.zeros(FLAGS.yolo_max_boxes - num_valid_nms_boxes, tf.int32)], 0)
-    selected_scores = tf.concat([selected_scores, tf.zeros(FLAGS.yolo_max_boxes - num_valid_nms_boxes, tf.float32)], -1)
+        selected_indices = tf.concat([selected_indices, tf.zeros(FLAGS.yolo_max_boxes - num_valid_nms_boxes, tf.int32)], 0)
+        selected_scores = tf.concat([selected_scores, tf.zeros(FLAGS.yolo_max_boxes - num_valid_nms_boxes, tf.float32)], -1)
 
-    boxes = tf.gather(boxes, selected_indices)
-    boxes = tf.expand_dims(boxes, axis=0)
-    scores = selected_scores
-    scores = tf.expand_dims(scores, axis=0)
-    classes = tf.gather(classes, selected_indices)
-    classes = tf.expand_dims(classes, axis=0)
-    valid_detections = num_valid_nms_boxes
-    valid_detections = tf.expand_dims(valid_detections, axis=0)
+        boxes = tf.gather(boxes, selected_indices)
+        boxes = tf.expand_dims(boxes, axis=0)
+        scores = selected_scores
+        scores = tf.expand_dims(scores, axis=0)
+        classes = tf.gather(classes, selected_indices)
+        classes = tf.expand_dims(classes, axis=0)
+        valid_detections = num_valid_nms_boxes
+        valid_detections = tf.expand_dims(valid_detections, axis=0)
 
-    img = draw_outputs(img, majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 10), class_names)
-    #cv2.imshow('ensemble', img)
-
-    cv2.imwrite('output.jpg', img)
+        time2 = time.time()
+        fps = 1 / (time2 - time1)
+        print(time1, time2, (time2-time1))
+        output = draw_outputs(copy.copy(img/255), majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 10), class_names)
+        output = cv2.putText(output, f'FPS: {fps}', (0, 30),
+                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+        cv2.imshow('ensemble', output)
+        if cv2.waitKey(1) == ord('q'):
+            break
+        #cv2.imwrite('output.jpg', img)
 
 
 

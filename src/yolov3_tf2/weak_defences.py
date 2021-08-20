@@ -51,8 +51,29 @@ class WeakDefence(object):
         x = self.transformation(x.numpy())
         return x
 
+    @tf.function  # (input_signature=(tf.TensorSpec(shape=[None], dtype=tf.float32),))
+    def serve(self, x):
+        print('tracing')
+        return self._model(x, training=False)
 
-    def predict(self, x):
+    def predict(self, x):  # this one is slow
+        """
+                Perform prediction for a input.
+                :param x: image.
+                :type x: `np.ndarray`
+                :return: tuple of prediction information of format `(boxes, scores, classes, nums)`.
+                :rtype: `tuple`
+                boxes, scores, classes, nums are all np.ndarray
+        """
+
+        x = tf.squeeze(x, 0)
+        x = self.transformation(x.numpy())
+        x = tf.expand_dims(x, 0)
+        # x = tf.image.resize(x, (self._size, self._size))
+
+        return self.serve(x)
+
+    def predict_external_tf_func(self, x):
         """
                 Perform prediction for a input.
                 :param x: image.
