@@ -168,6 +168,31 @@ def main(_argv):
             print(f'Time: {total}ms')
             break
 
+    #with interneal tf function
+    times = []
+    global_time = time.time()
+    while True:
+        _, img = vid.read()
+        if img is None:
+            logging.warning("Empty Frame")
+            time.sleep(0.1)
+            continue
+
+        # preprocess image
+        img = tf.expand_dims(img, 0)
+        img = transform_images(img, FLAGS.size)
+
+        t1 = time.time()
+        boxes, scores, classes, nums = yolo.predict_test(img)
+        t2 = time.time()
+        times.append(t2 - t1)
+        times = times[-20:]
+        if time.time() - global_time > FLAGS.test_duration:
+            total = sum(times) / len(times) * 1000
+            print(f'Time: {total}ms')
+            break
+
+
 if __name__ == '__main__':
     try:
         app.run(main)
