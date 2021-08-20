@@ -40,10 +40,10 @@ flags.DEFINE_enum('transfer', 'none',
                   'frozen: Transfer and freeze all, '
                   'fine_tune: Transfer all and freeze darknet only'
                   'yes: resume training')
-flags.DEFINE_integer('size', 608, 'image size')
+flags.DEFINE_integer('size', 416, 'image size')
 flags.DEFINE_integer('epochs', 10, 'number of epochs')
-flags.DEFINE_integer('batch_size', 2, 'batch size')
-flags.DEFINE_float('learning_rate', 1e-3, 'learning rate')
+flags.DEFINE_integer('batch_size', 16, 'batch size')
+flags.DEFINE_float('learning_rate', 1e-10, 'learning rate')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('weights_num_classes', None, 'specify num class for `weights` file if different, '
                      'useful in transfer learning with different number of classes')
@@ -73,10 +73,6 @@ def main(_argv):
             img = img.numpy()
             img = img / 255
             img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
-            while True:
-                if cv2.waitKey(1) == ord('q'):
-                    cv2.destroyAllWindows()
-                    break
             return img
         augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
         augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))

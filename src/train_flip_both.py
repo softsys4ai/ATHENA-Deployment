@@ -73,6 +73,7 @@ def main(_argv):
             img = np.flip(img, axis=1)
             img = np.flip(img, axis=0)
             img = img / 255
+            print(img.flags)
             return img
         augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
         augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))

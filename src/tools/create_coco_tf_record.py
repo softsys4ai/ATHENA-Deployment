@@ -20,7 +20,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import sys
-sys.path.append("./")
+
+#sys.path.append("./")
 from pycocotools.coco import COCO
 from PIL import Image
 from random import shuffle
@@ -28,16 +29,17 @@ import os, sys
 import numpy as np
 import tensorflow as tf
 import logging
-from tools import dataset_util #TODO fix this no import
+import dataset_util #TODO fix this no import
 from absl import app, flags, logging
 
+import pycocotools
 import cv2
 
 #flags = tf.app.flags
 flags.DEFINE_string('data_dir', '../data/coco2017_raw', 'Root directory to raw Microsoft COCO dataset.')
 flags.DEFINE_string('classes', '../data/coco.names', 'classes file')
 flags.DEFINE_string('set', 'val', 'Convert training set or validation set')
-flags.DEFINE_string('output_filepath', '../data/coco2017_train_trash.tfrecord', 'Path to output TFRecord')
+flags.DEFINE_string('output_filepath', '../data/clean_test_set.tfrecord', 'Path to output TFRecord')
 flags.DEFINE_bool('shuffle_imgs',True,'whether to shuffle images of coco')
 FLAGS = flags.FLAGS
 
@@ -154,6 +156,10 @@ def main(_):
 
     # load total coco data
     coco_data = load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img=FLAGS.shuffle_imgs)
+    #print('this', type(coco_data), len(coco_data), "\n", coco_data[0], "\n", coco_data[1])
+    coco_data = coco_data[:700]
+
+    #print(sum(list(map(lambda x: if 'pixel' in x: 1 else 0, temp))))
     total_imgs = len(coco_data)
     # write coco data to tf record
     with tf.io.TFRecordWriter(FLAGS.output_filepath) as tfrecord_writer:

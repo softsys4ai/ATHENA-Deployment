@@ -33,6 +33,10 @@ def main(_argv):
     #img = tf.expand_dims(img_raw, 0)
     #img = transform_images(img, FLAGS.size)
     img = cv2.imread(FLAGS.image)
+    img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img_in = tf.expand_dims(img_in, 0)
+    img_in = transform_images(img_in, FLAGS.size)
+
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
@@ -49,7 +53,6 @@ def main(_argv):
     scores = []
     classes = []
     for model in models:
-        img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         boxes_temp, scores_temp, classes_temp, _ = model.predict(tf.identity(img_in))
         boxes = np.concatenate((boxes, boxes_temp), axis=1) if np.size(boxes) else boxes_temp
         scores = np.concatenate((scores, scores_temp), axis=1) if np.size(scores) else scores_temp

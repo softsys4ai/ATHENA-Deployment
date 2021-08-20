@@ -113,7 +113,6 @@ def draw_outputs(img, outputs, class_names):
         img = cv2.putText(img, '{} {:.4f}'.format(
             class_names[int(classes[i])], objectness[i]),
             x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
-
     return img
 
 def draw_outputs_bbox_deltas(img, outputs, class_names):
@@ -196,6 +195,7 @@ def majority_voting(outputs, img_size, delta_limit):
         object_boxes.append(boxes[i])
         object_objectness.append(objectness[i])
         object_classes.append(classes[i])
+
         #object_boxes.append(boxes[i])#TODO: delete this
         #object_objectness.append(objectness[i])#TODO: delete this
         #object_classes.append(classes[i])#TODO: delete this

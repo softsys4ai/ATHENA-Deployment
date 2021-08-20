@@ -32,7 +32,6 @@ flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 
 @profile()
 def main(_argv):
-    tf.config.run_functions_eagerly(False)
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     if (physical_devices != []) and (FLAGS.gpu is not None):
         tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
@@ -90,7 +89,7 @@ def main(_argv):
         #img = rotate_image(img, FLAGS.rotate) if FLAGS.rotate != 0 else img
 
         #img = skimage.util.random_noise(img, mode='salt', seed=None, clip=False, amount=0.0)  # noise
-        img = skimage.util.img_as_float32(img)
+        #img = skimage.util.img_as_float32(img)
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         #img_in = img

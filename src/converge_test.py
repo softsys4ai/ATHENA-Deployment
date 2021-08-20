@@ -1,7 +1,7 @@
 from absl import app, flags, logging
 from absl.flags import FLAGS
+import skimage
 import cv2
-from tensorflow import keras
 
 import tensorflow as tf
 import numpy as np
@@ -9,7 +9,7 @@ from tensorflow.keras.callbacks import (
     ReduceLROnPlateau,
     EarlyStopping,
     ModelCheckpoint,
-    TensorBoard,
+    TensorBoard
 )
 from yolov3_tf2.models import (
     YoloV3, YoloV3Tiny, YoloLoss,
@@ -18,23 +18,21 @@ from yolov3_tf2.models import (
 )
 from yolov3_tf2.utils import freeze_all
 import yolov3_tf2.dataset as dataset
-#from yolov3_tf2 import dataset as dataset #this could be a bug
-import sys
 
 
 flags.DEFINE_string('dataset', './data/coco2017_train.tfrecord', 'path to dataset')
 flags.DEFINE_string('val_dataset', './data/coco2017_train.tfrecord', 'path to validation dataset')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
-flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3_clean/yolov3_clean.tf',
                     'path to weights file')
-flags.DEFINE_string('output', './checkpoints/yolov3_trash/yolov3_trash_dark_3.tf',
+flags.DEFINE_string('output', './checkpoints/yolov3_trash/yolov3_trash_converge.tf',
                     'path to save')
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_enum('mode', 'fit', ['fit', 'eager_fit', 'eager_tf'],
                   'fit: model.fit, '
                   'eager_fit: model.fit(run_eagerly=True), '
                   'eager_tf: custom GradientTape')
-flags.DEFINE_enum('transfer', 'none',
+flags.DEFINE_enum('transfer', 'yes',
                   ['none', 'darknet', 'no_output', 'frozen', 'fine_tune', 'yes'],
                   'none: Training from scratch, '
                   'darknet: Transfer darknet, '
@@ -43,9 +41,9 @@ flags.DEFINE_enum('transfer', 'none',
                   'fine_tune: Transfer all and freeze darknet only'
                   'yes: resume training')
 flags.DEFINE_integer('size', 416, 'image size')
-flags.DEFINE_integer('epochs', 50, 'number of epochs')
+flags.DEFINE_integer('epochs', 200, 'number of epochs')
 flags.DEFINE_integer('batch_size', 16, 'batch size')
-flags.DEFINE_float('learning_rate', 1e-5, 'learning rate')
+flags.DEFINE_float('learning_rate', 1e-4, 'learning rate')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('weights_num_classes', None, 'specify num class for `weights` file if different, '
                      'useful in transfer learning with different number of classes')
@@ -58,7 +56,7 @@ def main(_argv):
         tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
         tf.config.experimental.set_memory_growth(physical_devices[FLAGS.gpu], True)
     else:
-        tf.config.set_visible_devices([], 'GPU')
+        tf.config.experimental.set_visible_devices([], 'GPU')
 
     if FLAGS.tiny:
         model = YoloV3Tiny(FLAGS.size, training=True,
@@ -70,23 +68,31 @@ def main(_argv):
         anchors = yolo_anchors
         anchor_masks = yolo_anchor_masks
 
+    def augmentation(x):
+        def map_func(img):
+            img = img.numpy()
+            img = img / 255
+            img = skimage.util.random_noise(img, mode='salt', seed=None, amount=0.05)
+            return img
+        augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
+        augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))
+        return augmented_imgs
+
+
     if FLAGS.dataset:
         train_dataset = dataset.load_tfrecord_dataset(
             FLAGS.dataset, FLAGS.classes, FLAGS.size)
     else:
         train_dataset = dataset.load_fake_dataset()
 
-    train_dataset = train_dataset.shuffle(buffer_size=512)
+    train_dataset = train_dataset.shuffle(buffer_size=512, seed=1)
     train_dataset = train_dataset.batch(FLAGS.batch_size)
     train_dataset = train_dataset.map(lambda x, y: (
-        dataset.transform_images(x, FLAGS.size),
-        dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
-
-    logging.info("tensor? " + str(tf.executing_eagerly()))
+        tf.py_function(func=augmentation, inp=[x], Tout=tf.float32),
+        dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))#transform dataset
 
     train_dataset = train_dataset.prefetch(
         buffer_size=tf.data.experimental.AUTOTUNE)
-
     if FLAGS.val_dataset:
         val_dataset = dataset.load_tfrecord_dataset(
             FLAGS.val_dataset, FLAGS.classes, FLAGS.size)
@@ -94,9 +100,8 @@ def main(_argv):
         val_dataset = dataset.load_fake_dataset()
     val_dataset = val_dataset.batch(FLAGS.batch_size)
     val_dataset = val_dataset.map(lambda x, y: (
-        dataset.transform_images(x, FLAGS.size),
-        dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size)))
-    print(val_dataset)
+        tf.py_function(func=augmentation, inp=[x], Tout=tf.float32),
+        dataset.transform_targets(y, anchors, anchor_masks, FLAGS.size))) #transform dataset
 
     # Configure the model for transfer learning
     if FLAGS.transfer == 'none':
@@ -139,11 +144,11 @@ def main(_argv):
             freeze_all(model)
 
     optimizer = tf.keras.optimizers.Adam(lr=FLAGS.learning_rate)
-    #optimizer = tf.keras.optimizers.SGD(momentum=0.9127, learning_rate=0.00001)
     loss = [YoloLoss(anchors[mask], classes=FLAGS.num_classes)
             for mask in anchor_masks]
 
     if FLAGS.mode == 'eager_tf':
+        logging.info("flag 1")
         # Eager mode is great for debugging
         # Non eager graph mode is recommended for real training
         avg_loss = tf.keras.metrics.Mean('loss', dtype=tf.float32)
@@ -151,6 +156,8 @@ def main(_argv):
 
         for epoch in range(1, FLAGS.epochs + 1):
             for batch, (images, labels) in enumerate(train_dataset):
+                logging.info("flag 2")
+                print(batch, images)
                 with tf.GradientTape() as tape:
                     outputs = model(images, training=True)
                     regularization_loss = tf.reduce_sum(model.losses)
@@ -196,55 +203,14 @@ def main(_argv):
                       run_eagerly=(FLAGS.mode == 'eager_fit'))
 # checkpoints/yolov3_train_{epoch}.tf
 
-
-
-        class lr(keras.callbacks.Callback):
-            def on_epoch_begin(self, epoch, logs=None):
-                lr = self.model.optimizer.lr
-                tf.print(lr)
-
-        class save(keras.callbacks.Callback):
-            def on_epoch_begin(self, epoch, logs=None):
-                self.model.save(FLAGS.output)
-                tf.print("saving")
-
-        class burn_in(keras.callbacks.Callback):
-
-            def __init__(self):
-                self.burn = False
-
-            def on_epoch_begin(self, epoch, logs=None):
-                if epoch < 3:
-                    slope = FLAGS.learning_rate / 2
-                    self.model.optimizer.lr = slope * epoch
-                    logging.info(self.model.optimizer.lr)
-            #def on_epoch_begin(self, epoch, logs=None):
-            #    if epoch < 1:
-            #        self.burn = True
-            #        #self.model.optimizer.lr = 0.1
-            #    else:
-            #        self.burn = False
-
-            #def on_batch_begin(self, batch, logs=None):
-            #    if self.burn:
-            #        slope = FLAGS.learning_rate / 4
-            #        self.model.optimizer.lr = slope * batch
-            #        logging.info(self.model.optimizer.lr)
-
-        train_dataset = train_dataset.take(5)
-        val_dataset = train_dataset #val_dataset.take(1)
-        while True:
-            print(model.evaluate(val_dataset))
-        logs = tf.keras.callbacks.TensorBoard(log_dir='logs', histogram_freq=1)
         callbacks = [
             ReduceLROnPlateau(monitor="val_loss", factor=0.1, patience=3, verbose=1),
-            EarlyStopping(patience=50, verbose=1),
+            EarlyStopping(patience=20, verbose=1),
             ModelCheckpoint(FLAGS.output[:-3] + '_{epoch}.tf',
-                            verbose=1, save_weights_only=True, save_freq=1),
-            logs,
-            lr()
+                            verbose=1, save_weights_only=True),
+            TensorBoard(log_dir='logs')
         ]
-        #TensorBoard(log_dir='logs2')
+
         history = model.fit(train_dataset,
                             epochs=FLAGS.epochs,
                             callbacks=callbacks,
@@ -257,13 +223,8 @@ if __name__ == '__main__':
     except SystemExit:
         pass
 
-#python train.py --dataset ./data/voc2012_train.tfrecord --val_dataset ./data/voc2012_val.tfrecord --classes ./data/voc2012.names --num_classes 20 --mode fit --transfer darknet --batch_size 16 --epochs 10 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_voc2017/yolov3_voc2017.tf
-
-#python train.py --dataset ./data/coco2017_train.tfrecord --val_dataset ./data/coco2017_train.tfrecord --classes ./data/coco.names --num_classes 80 --mode fit --transfer darknet --batch_size 16 --epochs 2 --weights ./checkpoints/yolov3/yolov3.tf --weights_num_classes 80 --output ./checkpoints/yolov3_coco2017_trash/yolov3_coco2017_trash.tf
-
-#((None, 416, 416, 3), ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6)))
-#((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
-#((None, 320, 320, 3), ((None, 10, 10, 3, 6), (None, 20, 20, 3, 6), (None, 40, 40, 3, 6)))
 
 
-#monitor="val_loss", factor=0.1, patience=3, verbose=1
+
+#<MapDataset shapes: (<unknown>, ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6))), types: (tf.float32, (tf.float32, tf.float32, tf.float32))>
+#<MapDataset shapes: ((None, 416, 416, 3), ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6), (None, 52, 52, 3, 6)))

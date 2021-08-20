@@ -16,7 +16,7 @@ from yolov3_tf2.weak_defences import WeakDefence
 import copy
 
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3_trash/yolov3_trash_dark_2.tf',
+flags.DEFINE_string('weights', './checkpoints/yolov3/yolov3.tf',
                     'path to weights file')
 flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
 flags.DEFINE_integer('size', 416, 'resize images to')
@@ -45,15 +45,13 @@ def main(_argv):
 
     yolo.load_weights('./checkpoints/yolov3/yolov3.tf')
     yolo2.load_weights(FLAGS.weights)
-    print(yolo.summary())
-    print(yolo2.summary())
     logging.info('weights loaded')
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
 
-    wrapped_yolo = WeakDefence(yolo, 'salt', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
-    wrapped_yolo2 = WeakDefence(yolo2, 'salt', FLAGS.size)
+    wrapped_yolo = WeakDefence(yolo, 'clean', FLAGS.size) #TODO: make shure that each WD does not contaminate the other. some operations coppy while others dont.
+    wrapped_yolo2 = WeakDefence(yolo2, 'flip_both', FLAGS.size)
 
 
     times = []
@@ -86,11 +84,11 @@ def main(_argv):
             result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
             return result
 
-        img = skimage.util.img_as_float32(img)
+        #img = cv2.imread('./data/meme.jpg')
+        print(img.flags, type(img))
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        #img_in = tf.expand_dims(img_in, 0)
-        #img_in = transform_images(img_in, FLAGS.size)
-
+        img_in = tf.expand_dims(img_in, 0)
+        img_in = transform_images(img_in, FLAGS.size)
 
         t1 = time.time()
         boxes, scores, classes, nums = wrapped_yolo.predict(copy.copy(img_in))
@@ -100,8 +98,11 @@ def main(_argv):
         times = times[-20:]
 
 
-        output1 = draw_outputs(wrapped_yolo.get_image(copy.copy(img)), (boxes, scores, classes, nums), class_names)
-        output2 = draw_outputs(wrapped_yolo2.get_image(copy.copy(img)), (boxes2, scores2, classes2, nums2), class_names)
+        output1 = draw_outputs(wrapped_yolo.get_image(copy.copy(tf.squeeze(img_in,0))), (boxes, scores, classes, nums), class_names)
+        output2 = draw_outputs(wrapped_yolo2.get_image(copy.copy(tf.squeeze(img_in,0))), (boxes2, scores2, classes2, nums2), class_names)
+        #print('yolo', wrapped_yolo2.get_image(copy.copy(tf.squeeze(img_in, 0))).flags)
+        #print('output1', output1, type(output1))
+        #print('output2', output2, type(output2))
         img_all = np.concatenate((output1, output2), axis=1)
         img_all = cv2.putText(img_all, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
