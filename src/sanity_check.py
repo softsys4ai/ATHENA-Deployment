@@ -130,7 +130,7 @@ def main(_argv):
         img = transform_images(img, FLAGS.size)
 
         t1 = time.time()
-        boxes, scores, classes, nums = wrapped_yolo.predict(img)
+        boxes, scores, classes, nums = wrapped_yolo.predict_old(img)
         t2 = time.time()
         times.append(t2 - t1)
         times = times[-20:]
@@ -143,7 +143,7 @@ def main(_argv):
     @tf.function  # (input_signature=(tf.TensorSpec(shape=[None], dtype=tf.float32),))
     def serve_test(x):
         print('tracing')
-        return wrapped_yolo.predict_test(x, training=False)
+        return wrapped_yolo.predict(x, training=False)
 
     times = []
     global_time = time.time()

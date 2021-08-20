@@ -65,11 +65,10 @@ class WeakDefence(object):
         x = tf.squeeze(x, 0)
         x = self.transformation(x.numpy())
         x = tf.expand_dims(x, 0)
-        #x = tf.image.resize(x, (self._size, self._size))
 
-        return self._model.predict(x)
+        return self._model(x)
 
-    def predict_test(self, x):
+    def predict_old(self, x): #this one is slow
         """
                 Perform prediction for a input.
                 :param x: image.
@@ -78,8 +77,10 @@ class WeakDefence(object):
                 :rtype: `tuple`
                 boxes, scores, classes, nums are all np.ndarray
         """
+
         x = tf.squeeze(x, 0)
         x = self.transformation(x.numpy())
         x = tf.expand_dims(x, 0)
+        # x = tf.image.resize(x, (self._size, self._size))
 
-        return self._model(x)
+        return self._model.predict(x)
