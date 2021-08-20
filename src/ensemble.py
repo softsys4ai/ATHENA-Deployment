@@ -18,7 +18,7 @@ flags.DEFINE_list('wds', ['clean'], 'type the desired weak defence. type the nam
 flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 flags.DEFINE_integer('size', 416, 'resize images to')
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('image', './data/meme.jpg', 'path to input image')
+flags.DEFINE_string('input', './data/meme.jpg', 'path to input image')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 
 
@@ -52,9 +52,9 @@ def main(_argv):
     logging.info('ensemble loaded')
 
     try:
-        vid = cv2.VideoCapture(int(FLAGS.video))
+        vid = cv2.VideoCapture(int(FLAGS.input))
     except:
-        vid = cv2.VideoCapture(FLAGS.video)
+        vid = cv2.VideoCapture(FLAGS.input)
 
     while True:
         _, img = vid.read()
