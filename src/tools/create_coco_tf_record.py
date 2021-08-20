@@ -157,7 +157,7 @@ def main(_):
     # load total coco data
     coco_data = load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img=FLAGS.shuffle_imgs)
     #print('this', type(coco_data), len(coco_data), "\n", coco_data[0], "\n", coco_data[1])
-    coco_data = coco_data[:700]
+    #coco_data = coco_data[:700]
 
     #print(sum(list(map(lambda x: if 'pixel' in x: 1 else 0, temp))))
     total_imgs = len(coco_data)
