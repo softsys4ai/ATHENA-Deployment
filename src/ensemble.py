@@ -85,7 +85,6 @@ def main(_argv):
 
         time2 = time.time()
         fps = 1 / (time2 - time1)
-        print(time1, time2, (time2-time1))
         output = draw_outputs(copy.copy(img/255), majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 10), class_names)
         output = cv2.putText(output, f'FPS: {fps}', (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
