@@ -75,7 +75,7 @@ def main(_argv):
         img = transform_images(img, FLAGS.size)
 
         t1 = time.time()
-        boxes, scores, classes, nums = yolo.predict(img)
+        boxes, scores, classes, nums = yolo.predict_old(img)
         t2 = time.time()
         times.append(t2 - t1)
         times = times[-20:]
@@ -183,7 +183,7 @@ def main(_argv):
         img = transform_images(img, FLAGS.size)
 
         t1 = time.time()
-        boxes, scores, classes, nums = yolo.predict_test(img)
+        boxes, scores, classes, nums = wrapped_yolo.predict_test(img)
         t2 = time.time()
         times.append(t2 - t1)
         times = times[-20:]
