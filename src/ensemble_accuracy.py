@@ -1,29 +1,32 @@
-import copy
-import cv2
-import numpy as np
 from absl import app, flags, logging
 from absl.flags import FLAGS
+import cv2
 import tensorflow as tf
-from yolov3_tf2.dataset import load_tfrecord_dataset, transform_images
 from yolov3_tf2.models import (
     YoloV3, YoloV3Tiny
 )
-from yolov3_tf2.utils import draw_outputs
-import time
-from yolov3_tf2.weak_defences import WeakDefence
+from yolov3_tf2.dataset import transform_images
+from yolov3_tf2.utils import draw_outputs, majority_voting
 
-flags.DEFINE_string('weights', './checkpoints/yolov3_clean/yolov3_clean.tf',
-                    'path to weights file')
-flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
-flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_string('dataset', './data/coco2017_val.tfrecord', 'path to dataset')
-flags.DEFINE_string('output', '/nfs/general/lane/best_model.txt', 'path to output image')
-flags.DEFINE_float('accuracy', None, 'what is the minimum iou')
-flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
+import numpy as np #my thing to flip image
+from yolov3_tf2.weak_defences import WeakDefence
+import copy
+import time
+from yolov3_tf2.dataset import load_tfrecord_dataset, transform_images
+
+
+flags.DEFINE_list('wds', ['clean'], 'type the desired weak defence. type the name multiple times for multiple '
+                                         'instances of WD')
 flags.DEFINE_integer('gpu', None, 'set which gpu to use')
+flags.DEFINE_integer('size', 416, 'resize images to')
+flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
+#flags.DEFINE_string('input', './data/meme.jpg', 'path to input image')
+flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
+flags.DEFINE_string('dataset', './data/clean_test_set.tfrecord', 'path to dataset')
+flags.DEFINE_string('output', 'ensemble_mAP.txt', 'path to output image')
+flags.DEFINE_integer('sensitivity', 10, 'controls the sensitivity of majority voting')
 flags.DEFINE_boolean('show_img', False, 'controls weather or not images are shown')
-flags.DEFINE_string('wd', 'clean', 'controls the wd to be used')
+
 
 
 def bb_intersection_over_union(boxA, boxB):
@@ -45,7 +48,6 @@ def bb_intersection_over_union(boxA, boxB):
     # return the intersection over union value
     return iou
 
-
 def main(_argv):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     if (physical_devices != []) and (FLAGS.gpu is not None):
@@ -54,14 +56,13 @@ def main(_argv):
     else:
         tf.config.set_visible_devices([], 'GPU')
 
-    if FLAGS.tiny:
-        yolo = YoloV3Tiny(classes=FLAGS.num_classes)
-    else:
-        yolo = YoloV3(classes=FLAGS.num_classes)
-
-    yolo.load_weights(FLAGS.weights).expect_partial()
-    wrapped_yolo = WeakDefence(yolo, FLAGS.wd, FLAGS.size)
-    logging.info('weights loaded')
+    models = []
+    for wd in FLAGS.wds:
+        wd_model = YoloV3(classes=FLAGS.num_classes)
+        weights = f'./checkpoints/yolov3_{wd}/yolov3_{wd}.tf'
+        wd_model.load_weights(weights)
+        models.append(WeakDefence(wd_model, wd, FLAGS.size))
+    logging.info('ensemble loaded')
 
     class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
     logging.info('classes loaded')
@@ -107,8 +108,42 @@ def main(_argv):
             # boxes2, scores2, classes2, nums2 = boxes[0], scores[0], classes[0], nums[0]
             img = tf.expand_dims(image, 0)
             img = transform_images(img, FLAGS.size)
-            boxes2, scores2, classes2, nums2 = wrapped_yolo.predict(img)
-            pred_boxes, pred_scores, pred_classes, pred_nums = boxes2[0], scores2[0], classes2[0], nums2[0]
+
+            #boxes2, scores2, classes2, nums2 = wrapped_yolo.predict(img)
+            boxes2 = []
+            scores2 = []
+            classes2 = []
+            for model in models:
+                boxes_temp, scores_temp, classes_temp, _ = model.predict(tf.identity(img))
+                boxes2 = np.concatenate((boxes2, boxes_temp), axis=1) if np.size(boxes2) else boxes_temp
+                scores2 = np.concatenate((scores2, scores_temp), axis=1) if np.size(scores2) else scores_temp
+                classes2 = np.concatenate((classes2, classes_temp), axis=1) if np.size(classes2) else classes_temp
+
+            boxes2 = np.squeeze(boxes2, axis=0)
+            scores2 = np.squeeze(scores2, axis=0)
+            classes2 = np.squeeze(classes2, axis=0)
+
+            selected_indices, selected_scores = tf.image.non_max_suppression_with_scores(
+                boxes2, scores2, max_output_size=100, iou_threshold=0.5, score_threshold=0.5, soft_nms_sigma=0.5)
+
+            num_valid_nms_boxes = tf.shape(selected_indices)[0]
+
+            selected_indices = tf.concat(
+                [selected_indices, tf.zeros(FLAGS.yolo_max_boxes - num_valid_nms_boxes, tf.int32)], 0)
+            selected_scores = tf.concat(
+                [selected_scores, tf.zeros(FLAGS.yolo_max_boxes - num_valid_nms_boxes, tf.float32)], -1)
+
+            boxes2 = tf.gather(boxes2, selected_indices)
+            boxes2 = tf.expand_dims(boxes2, axis=0)
+            scores2 = selected_scores
+            scores2 = tf.expand_dims(scores2, axis=0)
+            classes2 = tf.gather(classes2, selected_indices)
+            classes2 = tf.expand_dims(classes2, axis=0)
+            valid_detections = num_valid_nms_boxes
+            valid_detections = tf.expand_dims(valid_detections, axis=0)
+
+            boxes2, scores2, classes2, valid_detections = majority_voting((boxes2, scores2, classes2, valid_detections), FLAGS.size, FLAGS.sensitivity)
+            pred_boxes, pred_scores, pred_classes, pred_nums = boxes2[0], scores2[0], classes2[0], valid_detections[0]
 
 
             # calculate the number of miss classified objects
@@ -135,7 +170,7 @@ def main(_argv):
             if FLAGS.show_img:
                 image = cv2.cvtColor(image.numpy() / 255, cv2.COLOR_RGB2BGR)
                 img1 = draw_outputs(copy.copy(image), (boxes, scores, classes, nums), class_names)
-                img2 = draw_outputs(copy.copy(image), (boxes2, scores2, classes2, nums2), class_names)
+                img2 = draw_outputs(copy.copy(image), (boxes2, scores2, classes2, valid_detections), class_names)
                 img_all = np.concatenate((img1, img2), axis=1)
                 img_all = cv2.putText(img_all, f'TP = {tp} FP = {fp}\nprecision = {precision} recall = {recall}', (0, 30),
                                       cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
@@ -164,9 +199,12 @@ def main(_argv):
     latency = latency / 10
     average_precision = average_precision / average_counter
     average_recall = average_recall / average_counter
-    file_object.write(f'\n{FLAGS.weights[14:]} mAP: {mAP} average_precision: {average_precision} average_recall: {average_recall} latency: {latency}')
+    file_object.write(f'\n{FLAGS.wds} mAP: {mAP} average_precision: {average_precision} average_recall: {average_recall} latency: {latency}')
     file_object.close()
-    #print(f'mAP: {mAP} average_precision: {average_precision} average_recall: {average_recall} latency: {latency}')
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -174,3 +212,9 @@ if __name__ == '__main__':
         app.run(main)
     except SystemExit:
         pass
+
+
+
+
+
+

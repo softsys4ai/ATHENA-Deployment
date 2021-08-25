@@ -4,3 +4,9 @@ yolov3_clean/yolov3_clean.tf mAP: 0.9634920634920635 average_precision: 69.75 av
 yolov3_clean/yolov3_clean.tf mAP: 0.8297883597883597 average_precision: 40.74999999999999 average_recall: 20.330189255189254 latency: 59.089709758758545
 yolov3_clean/yolov3_clean.tf mAP: 9.527820714144243 average_precision: 600.1309523809523 average_recall: 253.00115596477872 latency: 628.7031183242798
 yolov3_clean/yolov3_clean.tf mAP: 0.9761363636363636 average_precision: 0.74 average_recall: 59.94964137170023 latency: 88.14000999927521
+
+
+yolov3_clean/yolov3_clean.tf mAP: 0.9166666666666667 average_precision: 0.96 average_recall: 0.6531368829828584 latency: 55.50039315223694
+yolov3_clean/yolov3_clean.tf mAP: 0.9166666666666667 average_precision: 0.96 average_recall: 0.6531368829828584 latency: 53.85788655281067
+yolov3_clean/yolov3_clean.tf mAP: 0.08333333333333333 average_precision: 0.96 average_recall: 0.6531368829828584 latency: 54.02041006088257
+yolov3_clean/yolov3_clean.tf mAP: 0.9166666666666667 average_precision: 0.96 average_recall: 0.6531368829828584 latency: 51.74812197685242
