@@ -85,7 +85,7 @@ def main(_argv):
             return result
 
         #img = cv2.imread('./data/meme.jpg')
-        print(img.flags, type(img))
+        #print(img.flags, type(img))
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_in = tf.expand_dims(img_in, 0)
         img_in = transform_images(img_in, FLAGS.size)

@@ -109,15 +109,19 @@ def main(_argv):
 
         augmented_imgs = tf.map_fn(lambda img: map_func(img), x)
         augmented_imgs = tf.image.resize(augmented_imgs, (FLAGS.size, FLAGS.size))
-        augmented_imgs = tf.image.random_hue(augmented_imgs, 0.15)
-        augmented_imgs = tf.image.random_saturation(augmented_imgs, lower=1, upper=10)
+        #augmented_imgs = tf.image.random_hue(augmented_imgs, 0.15)
+        #augmented_imgs = tf.image.random_saturation(augmented_imgs, lower=1, upper=10)
         return augmented_imgs
 
     if FLAGS.dataset:
         raw_dataset = dataset.load_tfrecord_dataset(
             FLAGS.dataset, FLAGS.classes, FLAGS.size)
+        for img, lable in raw_dataset:
+            img = img.numpy() / 255
+            cv2.imshow('out', img)
+            cv2.waitKey(5000)
 
-    raw_dataset = raw_dataset.shuffle(buffer_size=512, seed=7)
+    #raw_dataset = raw_dataset.shuffle(buffer_size=512, seed=7)
     raw_dataset = raw_dataset.batch(FLAGS.batch_size)
     salt_dataset = raw_dataset.map(lambda x, y: (
         tf.py_function(func=augmentation, inp=[x], Tout=tf.float32),
@@ -126,6 +130,23 @@ def main(_argv):
     #salt_dataset = salt_dataset.unbatch()
     salt_dataset = salt_dataset.prefetch(
         buffer_size=tf.data.experimental.AUTOTUNE)
+
+    data = salt_dataset.take(1)
+    for img, lable in salt_dataset:
+        img = img.numpy()[0]
+        cv2.imshow('out', img)
+        cv2.waitKey(5000)
+    for img, lable in salt_dataset.take(1):
+        img = img.numpy()[0]
+        cv2.imshow('out', img)
+        cv2.waitKey(5000)
+
+    for accuracy in range(10):
+        print(0.5 + (0.05*accuracy))
+
+
+    raise SystemExit(10)
+
 
     for img, lable in salt_dataset.take(1):
         print(img)
@@ -181,6 +202,11 @@ def main(_argv):
         cv2.imshow('output', img_all)
         cv2.waitKey(100)
 
+
+
+def main2(_argv):
+    file_object = open('best_model.txt', 'a')
+    file_object.write('\n test new line')
 
 if __name__ == '__main__':
     app.run(main)
