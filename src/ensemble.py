@@ -20,6 +20,7 @@ flags.DEFINE_integer('size', 416, 'resize images to')
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_string('input', './data/meme.jpg', 'path to input image')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
+flags.DEFINE_integer('sensitivity', 10, 'controls the sensitivity of majority voting')
 
 
 def main(_argv):
@@ -100,7 +101,7 @@ def main(_argv):
 
         time2 = time.time()
         fps = 1 / (time2 - time1)
-        output = draw_outputs(copy.copy(img/255), majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, 10), class_names)
+        output = draw_outputs(copy.copy(img/255), majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, FLAGS.sensitivity), class_names)
         output = cv2.putText(output, f'FPS: {fps}', (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
         cv2.imshow('ensemble', output)
