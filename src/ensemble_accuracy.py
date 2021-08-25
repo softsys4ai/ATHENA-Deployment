@@ -60,7 +60,7 @@ def main(_argv):
     for wd in FLAGS.wds:
         wd_model = YoloV3(classes=FLAGS.num_classes)
         weights = f'./checkpoints/yolov3_{wd}/yolov3_{wd}.tf'
-        wd_model.load_weights(weights)
+        wd_model.load_weights(weights).expect_partial()
         models.append(WeakDefence(wd_model, wd, FLAGS.size))
     logging.info('ensemble loaded')
 

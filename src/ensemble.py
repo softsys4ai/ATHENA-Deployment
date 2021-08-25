@@ -18,7 +18,7 @@ flags.DEFINE_list('wds', ['clean'], 'type the desired weak defence. type the nam
 flags.DEFINE_integer('gpu', None, 'set which gpu to use')
 flags.DEFINE_integer('size', 416, 'resize images to')
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('input', './data/meme.jpg', 'path to input image')
+flags.DEFINE_string('input', '0', 'path to input image')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
 flags.DEFINE_integer('sensitivity', 10, 'controls the sensitivity of majority voting')
 
@@ -48,7 +48,7 @@ def main(_argv):
     for wd in FLAGS.wds:
         wd_model = YoloV3(classes=FLAGS.num_classes)
         weights = f'./checkpoints/yolov3_{wd}/yolov3_{wd}.tf'
-        wd_model.load_weights(weights)
+        wd_model.load_weights(weights).expect_partial()
         models.append(WeakDefence(wd_model, wd, FLAGS.size))
     logging.info('ensemble loaded')
 
