@@ -84,7 +84,7 @@ def main(_argv):
     #dataset = dataset.shuffle(512, seed=0)  # 7 is e+01
     time1 = time.time()
     for accuracy in range(10):
-        for image, labels in dataset.take(500):
+        for image, labels in dataset.take(100):
             boxes = []
             scores = []
             classes = []
