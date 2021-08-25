@@ -209,7 +209,7 @@ def majority_voting(outputs, img_size, delta_limit):
 
 
     #boxes, objectness, classes, nums = [], [], [], len(objects)
-    all_object_classes = tf.convert_to_tensor(all_object_classes, dtype=tf.int32)
+    all_object_classes = tf.RaggedTensor.from_tensor(all_object_classes, dtype=tf.int32)
     all_object_boxes = tf.convert_to_tensor(all_object_boxes, dtype=tf.float32)
     all_object_objectness = tf.convert_to_tensor(all_object_objectness, dtype=tf.float32)
     object_num = tf.convert_to_tensor(object_num, dtype=tf.int32)
