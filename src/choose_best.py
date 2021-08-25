@@ -152,9 +152,9 @@ def main(_argv):
             coordinates.append([recall, precision])
             average_counter += 1
 
-
-        coordinates = sorted(coordinates, key=lambda k: k[0])
+        coordinates = sorted(coordinates, key=lambda k: [k[0], k[1]])
         x_coordinates, y_coordinates = list(map(lambda c: c[0], coordinates)), list(map(lambda c: c[1], coordinates))
+
         mAP += np.trapz(y=y_coordinates, x=x_coordinates)
         time2 = time.time()
         latency += time2 - time1

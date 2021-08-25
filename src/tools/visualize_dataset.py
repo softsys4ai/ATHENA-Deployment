@@ -52,7 +52,9 @@ def main(_argv):
         #print(type(img))
         #print(np.shape(img))
         #print(type(img[0][0][0]))
+
         img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
+
         #cv2.imshow('out', img)
         #cv2.waitKey(9000)
         cv2.imwrite(FLAGS.output, img)
