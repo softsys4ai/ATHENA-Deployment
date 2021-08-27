@@ -195,9 +195,6 @@ def majority_voting(outputs, img_size, delta_limit):
         object_boxes.append(boxes[i])
         object_objectness.append(objectness[i])
         object_classes.append(classes[i])
-        # handle cases were there is just one prediction for a object:
-        if len(object_classes) <= 2:
-            object_classes.append(classes[i])
 
         #object_boxes.append(boxes[i])#TODO: delete this
         #object_objectness.append(objectness[i])#TODO: delete this
@@ -221,9 +218,9 @@ def majority_voting(outputs, img_size, delta_limit):
         cls, _, count = tf.unique_with_counts(x)
         return cls[tf.math.argmax(count)]
 
-    decided_classes = tf.map_fn(fn=get_decided_classes, elems=all_object_classes)
-    decided_boxes = tf.map_fn(fn=lambda object: object[-1], elems=all_object_boxes) #TODO: average the cordinates for more accurate boxes
-    decided_objectness = tf.map_fn(fn=lambda object: object[-1], elems=all_object_objectness) #TODO: average the objectness for more accurate objectness
+    decided_classes = tf.map_fn(fn=get_decided_classes, elems=all_object_classes, fn_output_signature=tf.int64)
+    decided_boxes = tf.map_fn(fn=lambda object: object[-1], elems=all_object_boxes, fn_output_signature=tf.float32) #TODO: average the cordinates for more accurate boxes
+    decided_objectness = tf.map_fn(fn=lambda object: object[-1], elems=all_object_objectness, fn_output_signature=tf.float32) #TODO: average the objectness for more accurate objectness
     decided_boxes = tf.expand_dims(decided_boxes, axis=0)
     decided_objectness = tf.expand_dims(decided_objectness, axis=0)
     decided_classes = tf.expand_dims(decided_classes, axis=0)
