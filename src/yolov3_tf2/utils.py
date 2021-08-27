@@ -195,6 +195,9 @@ def majority_voting(outputs, img_size, delta_limit):
         object_boxes.append(boxes[i])
         object_objectness.append(objectness[i])
         object_classes.append(classes[i])
+        # handle cases were there is just one prediction for a object:
+        if len(object_classes) <= 2:
+            object_classes.append(classes[i])
 
         #object_boxes.append(boxes[i])#TODO: delete this
         #object_objectness.append(objectness[i])#TODO: delete this
