@@ -55,7 +55,7 @@ def get_weighted_box(boxes):
     label_list = []
     w = 0
     for b in boxes:
-        box[3:] += (b[1] * b[2:])
+        box[2:] += (b[1] * b[2:])
         conf += b[1]
         conf_list.append(b[1])
         label_list.append(b[0])
