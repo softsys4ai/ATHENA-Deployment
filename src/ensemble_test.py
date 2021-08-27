@@ -132,18 +132,20 @@ def main(_argv):
             cluster = []
             for j in range(i+1, len(boxes)):
                 if bb_intersection_over_union(boxes[i], boxes[j]) > FLAGS.sensitivity:
-                    temp_box = [classes[j], scores[j]].extend(boxes[j])
+                    temp_box = [classes[j], scores[j]]
+                    temp_box.extend(boxes[j])
                     cluster.append(temp_box)
                     np.delete(classes, j)
                     np.delete(scores, j)
                     np.delete(boxes, j)
                     j -= 1
-            cluster.append([classes[i], scores[i]].extend(boxes[i]))
+            temp_box = [classes[i], scores[i]]
+            temp_box.extend(boxes[i])
+            cluster.append(temp_box)
             box_clusters.append(cluster)
 
         boxes, scores, classes, valid_detections = [], [], [], 0
         for cluster in box_clusters:
-            print(cluster)
             prediction = get_weighted_box(cluster)
             classes.append(prediction[0])
             scores.append(prediction[1])
