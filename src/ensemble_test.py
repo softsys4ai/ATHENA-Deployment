@@ -20,7 +20,7 @@ flags.DEFINE_integer('size', 416, 'resize images to')
 flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
 flags.DEFINE_string('input', '0', 'path to input image')
 flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
-flags.DEFINE_integer('sensitivity', 10, 'controls the sensitivity of majority voting')
+flags.DEFINE_float('sensitivity', 0.5, 'controls the sensitivity of majority voting')
 
 def bb_intersection_over_union(boxA, boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
@@ -64,6 +64,7 @@ def get_weighted_box(boxes):
     # get the average confidence
     box[1] = conf / len(boxes)
     box[2:] /= conf  # divide by the sum of weights to get weighted average of bbox coordinates
+    print(box)
     return box
 
 def main(_argv):
