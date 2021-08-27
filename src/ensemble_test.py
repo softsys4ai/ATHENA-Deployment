@@ -119,7 +119,7 @@ def main(_argv):
             boxes_temp, scores_temp, classes_temp, _ = model.predict(tf.identity(img_in))
             boxes = np.concatenate((boxes, boxes_temp), axis=1) if np.size(boxes) else boxes_temp
             scores = np.concatenate((scores, scores_temp), axis=1) if np.size(scores) else scores_temp
-            classes = np.concatenate((classes, classes_temp), axis=1) if np.size(classes) else [80 - x for x in classes_temp]
+            classes = np.concatenate((classes, classes_temp), axis=1) if np.size(classes) else [79 - x for x in classes_temp]
 
         boxes = np.squeeze(boxes, axis=0)
         scores = np.squeeze(scores, axis=0)
@@ -153,7 +153,7 @@ def main(_argv):
         valid_detections = tf.expand_dims(valid_detections, axis=0)
 
         #results = majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, FLAGS.sensitivity)
-        result = (boxes, scores, classes, valid_detections)
+        results = (boxes, scores, classes, valid_detections)
         time2 = time.time()
         fps = 1 / (time2 - time1)
         output = draw_outputs(copy.copy(img/255), results, class_names)
