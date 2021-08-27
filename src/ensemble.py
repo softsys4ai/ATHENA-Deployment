@@ -99,9 +99,10 @@ def main(_argv):
         valid_detections = num_valid_nms_boxes
         valid_detections = tf.expand_dims(valid_detections, axis=0)
 
+        results = majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, FLAGS.sensitivity)
         time2 = time.time()
         fps = 1 / (time2 - time1)
-        output = draw_outputs(copy.copy(img/255), majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, FLAGS.sensitivity), class_names)
+        output = draw_outputs(copy.copy(img/255), results, class_names)
         output = cv2.putText(output, f'FPS: {fps}', (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
         cv2.imshow('ensemble', output)
