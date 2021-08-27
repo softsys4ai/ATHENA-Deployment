@@ -55,6 +55,7 @@ def get_weighted_box(boxes):
     label_list = []
     w = 0
     for b in boxes:
+        print(box, b)
         box[2:] += (b[1] * b[2:])
         conf += b[1]
         conf_list.append(b[1])
@@ -142,6 +143,7 @@ def main(_argv):
 
         boxes, scores, classes, valid_detections = [], [], [], 0
         for cluster in box_clusters:
+            print(cluster)
             prediction = get_weighted_box(cluster)
             classes.append(prediction[0])
             scores.append(prediction[1])
