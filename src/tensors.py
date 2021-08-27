@@ -58,9 +58,14 @@ def nope(_argv):
 
     tf.print(tf.executing_eagerly())
 
-
-
 def main(_argv):
+    foo = [1,2,3,4]
+    x = 5
+    zee = []
+    zee.append(foo[1:])
+    print(zee)
+
+def main2(_argv):
     anchors = yolo_anchors
     anchor_masks = yolo_anchor_masks
 
