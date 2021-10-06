@@ -28,7 +28,6 @@ flags.DEFINE_integer('sensitivity', 10, 'controls the sensitivity of majority vo
 flags.DEFINE_boolean('show_img', False, 'controls weather or not images are shown')
 
 
-
 def bb_intersection_over_union(boxA, boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
     xA = max(boxA[0], boxB[0])
@@ -48,7 +47,8 @@ def bb_intersection_over_union(boxA, boxB):
     # return the intersection over union value
     return iou
 
-def main(_argv):
+
+def doThis(ensemble):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     if (physical_devices != []) and (FLAGS.gpu is not None):
         tf.config.experimental.set_visible_devices(physical_devices[FLAGS.gpu], 'GPU')
@@ -56,7 +56,6 @@ def main(_argv):
     else:
         tf.config.set_visible_devices([], 'GPU')
 
-def doThis(ensemble):
     models = []
     for wd in ensemble:
         wd_model = YoloV3(classes=FLAGS.num_classes)
@@ -209,17 +208,12 @@ def doThis(ensemble):
     file_object.close()
 
 
-
-
-
-
-
-if __name__ == '__main__':
-    try:
-        app.run(main)
-
-    except SystemExit:
-        pass
+def main(_argv):
+    doThis(['clean'])
+    doThis(['salt'])
+    doThis(['pepper'])
+    doThis(['gaussian'])
+    doThis(['compress_png_8'])
 
     doThis(['clean', 'salt', 'pepper', 'gaussian', 'poisson', 'compress_png_8'])
     doThis(['salt', 'pepper', 'gaussian', 'poisson', 'compress_png_8'])
@@ -238,11 +232,16 @@ if __name__ == '__main__':
     doThis(['poisson'])
     doThis(['salt', 'pepper', 'gaussian', 'poisson'])
 
-    doThis(['clean'])
-    doThis(['salt'])
-    doThis(['pepper'])
-    doThis(['gaussian'])
-    doThis(['compress_png_8'])
+
+
+if __name__ == '__main__':
+    try:
+        app.run(main)
+
+    except SystemExit:
+        pass
+
+
 
 
 

@@ -3,3 +3,7 @@
 
 
 ['clean'] mAP: 3.4783007120461478 average_precision: 0.44436478155003534 average_recall: 0.5546213125448971 latency: 335.47250242233275
+
+['clean'] mAP: 0.0 average_precision: 1.0 average_recall: 1.0 latency: 0.654662823677063
+['clean'] mAP: 0.2 average_precision: 0.6 average_recall: 0.6 latency: 0.6832188129425049
+['clean'] mAP: 0.0 average_precision: 0.0 average_recall: 0.0 latency: 0.7386638164520264
