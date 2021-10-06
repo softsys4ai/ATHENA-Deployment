@@ -204,7 +204,7 @@ def doThis(ensemble):
     latency = latency / 10
     average_precision = average_precision / average_counter
     average_recall = average_recall / average_counter
-    file_object.write(f'\n{FLAGS.wds} mAP: {mAP} average_precision: {average_precision} average_recall: {average_recall} latency: {latency}')
+    file_object.write(f'\n{ensemble} mAP: {mAP} average_precision: {average_precision} average_recall: {average_recall} latency: {latency}')
     file_object.close()
 
 
