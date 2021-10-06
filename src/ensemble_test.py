@@ -54,9 +54,17 @@ def get_weighted_box(boxes):
     conf_list = []
     label_list = []
     w = 0
+    #print(boxes)
+    #raise (SystemExit(69))
     for b in boxes:
         print(box, b)
-        box[2:] += (b[1] * b[2:])
+        for i in range(2,6 ):
+            box[i] = box[i] + (b[1] * b[i])
+            print(box[i])
+            #print('zee', (box[i] + (b[1] * b[i])))
+            #print('ree', box)
+
+        #box[2:] += list((b[1] * x for x in b[2:]))
         conf += b[1]
         conf_list.append(b[1])
         label_list.append(b[0])
@@ -64,8 +72,9 @@ def get_weighted_box(boxes):
     box[0] = np.bincount(label_list).argmax()
     # get the average confidence
     box[1] = conf / len(boxes)
+    print('foo', box)
     box[2:] /= conf  # divide by the sum of weights to get weighted average of bbox coordinates
-    print(box)
+    print('yuh', box)
     return box
 
 def main(_argv):
@@ -145,7 +154,11 @@ def main(_argv):
             box_clusters.append(cluster)
 
         boxes, scores, classes, valid_detections = [], [], [], 0
+        #print(box_clusters)
+        #raise (SystemExit(69))
         for cluster in box_clusters:
+            #print(cluster)
+            #raise (SystemExit(69))
             prediction = get_weighted_box(cluster)
             classes.append(prediction[0])
             scores.append(prediction[1])
@@ -156,6 +169,7 @@ def main(_argv):
         scores = tf.expand_dims(scores, axis=0)
         classes = tf.expand_dims(classes, axis=0)
         valid_detections = tf.expand_dims(valid_detections, axis=0)
+        print(boxes)
 
         #results = majority_voting((boxes, scores, classes, valid_detections), FLAGS.size, FLAGS.sensitivity)
         results = (boxes, scores, classes, valid_detections)

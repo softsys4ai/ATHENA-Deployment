@@ -56,8 +56,9 @@ def main(_argv):
     else:
         tf.config.set_visible_devices([], 'GPU')
 
+def doThis(ensemble):
     models = []
-    for wd in FLAGS.wds:
+    for wd in ensemble:
         wd_model = YoloV3(classes=FLAGS.num_classes)
         weights = f'./checkpoints/yolov3_{wd}/yolov3_{wd}.tf'
         wd_model.load_weights(weights).expect_partial()
@@ -85,7 +86,7 @@ def main(_argv):
     #dataset = dataset.shuffle(512, seed=0)  # 7 is e+01
     for accuracy in range(10): #TODO: remove for loop and have iou calculated at all levels at the same time
         time1 = time.time()
-        for image, labels in dataset.take(1):#100):
+        for image, labels in dataset.take(100):#100):
             boxes = []
             scores = []
             classes = []
@@ -212,11 +213,36 @@ def main(_argv):
 
 
 
+
 if __name__ == '__main__':
     try:
         app.run(main)
+
     except SystemExit:
         pass
+
+    doThis(['clean', 'salt', 'pepper', 'gaussian', 'poisson', 'compress_png_8'])
+    doThis(['salt', 'pepper', 'gaussian', 'poisson', 'compress_png_8'])
+    doThis(['pepper', 'gaussian', 'poisson', 'compress_png_8'])
+    doThis(['gaussian', 'poisson', 'compress_png_8'])
+    doThis(['poisson', 'compress_png_8'])
+    doThis(['clean', 'salt', 'pepper', 'gaussian', 'poisson'])
+    doThis(['clean', 'salt', 'pepper', 'gaussian'])
+    doThis(['clean', 'salt', 'pepper'])
+    doThis(['clean', 'salt'])
+    doThis(['salt', 'pepper', 'gaussian'])
+    doThis(['salt', 'pepper'])
+    doThis(['salt'])
+    doThis(['pepper', 'gaussian', 'poisson'])
+    doThis(['gaussian', 'poisson'])
+    doThis(['poisson'])
+    doThis(['salt', 'pepper', 'gaussian', 'poisson'])
+
+    doThis(['clean'])
+    doThis(['salt'])
+    doThis(['pepper'])
+    doThis(['gaussian'])
+    doThis(['compress_png_8'])
 
 
 

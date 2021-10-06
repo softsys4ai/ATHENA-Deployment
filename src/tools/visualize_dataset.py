@@ -21,9 +21,9 @@ def main(_argv):
     logging.info('classes loaded')
 
     dataset = load_tfrecord_dataset(FLAGS.dataset, FLAGS.classes, FLAGS.size)
-    dataset = dataset.shuffle(512, seed=7) #7 is e+01
+    #dataset = dataset.shuffle(512, seed=7) #7 is e+01
     #print(dataset)
-    for image, labels in dataset.take(1):
+    for image, labels in dataset.take(7):
         print(image)
         boxes = []
         scores = []

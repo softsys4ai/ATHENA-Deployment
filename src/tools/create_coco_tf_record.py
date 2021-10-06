@@ -155,7 +155,8 @@ def main(_):
         raise ValueError("you must either convert train data or val data")
 
     # load total coco data
-    coco_data = load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img=FLAGS.shuffle_imgs)
+    #coco_data = load_coco_dection_dataset(imgs_dir, annotations_filepath, shuffle_img=FLAGS.shuffle_imgs)
+    coco_data = load_coco_dection_dataset("A:\\apricot_raw\APRICOT\Images\\test", 'A:\\apricot_raw\APRICOT\Annotations\\apricot_test_all_annotations.json', shuffle_img=FLAGS.shuffle_imgs)
     #print('this', type(coco_data), len(coco_data), "\n", coco_data[0], "\n", coco_data[1])
     #coco_data = coco_data[:700]
 
